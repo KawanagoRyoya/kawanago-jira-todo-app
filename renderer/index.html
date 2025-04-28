@@ -1,10 +1,6 @@
 <!DOCTYPE html>
 <html lang="ja">
-<head>
-  <meta charset="UTF-8">
-  <title>ToDo 管理アプリ</title>
-  <link rel="stylesheet" href="style.css">
-</head>
+<head><meta charset="UTF-8"><title>kawanago-jira-todo-app</title><link rel="stylesheet" href="style.css"></head>
 <body>
   <div class="toolbar">
     <button id="btn-todo">ToDo</button>
@@ -13,6 +9,11 @@
     <button id="btn-report-start">始業報告</button>
     <button id="btn-report-end">終業報告</button>
   </div>
+  <div id="sprint-input-area" style="display:none;margin:16px;">
+    <input type="text" id="sprint-id-input" placeholder="Sprint IDを入力" />
+    <button id="sprint-submit">取得</button>
+  </div>
+  <div id="notification" class="notification"></div>
   <div id="view-container"></div>
   <script src="renderer.js"></script>
 </body>
