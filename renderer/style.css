@@ -8,3 +8,9 @@
   border-radius: 4px;
   display: none;
 }
+#todo-list,
+#backlog-list {
+  list-style: none;   /* 箇条書きマーカーを消す */
+  padding-left: 0;    /* 左余白を詰める */
+  margin-left: 0;
+}
