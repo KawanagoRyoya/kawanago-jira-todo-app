@@ -1,7 +1,13 @@
+<!-- renderer/index.html -->
 <!DOCTYPE html>
 <html lang="ja">
-<head><meta charset="UTF-8"><title>kawanago-jira-todo-app</title><link rel="stylesheet" href="style.css"></head>
+<head>
+  <meta charset="UTF-8" />
+  <title>kawanago-jira-todo-app</title>
+  <link rel="stylesheet" href="style.css" />
+</head>
 <body>
+  <!-- ツールバー -->
   <div class="toolbar">
     <button id="btn-todo">ToDo</button>
     <button id="btn-backlog">Backlog</button>
@@ -9,12 +15,40 @@
     <button id="btn-report-start">始業報告</button>
     <button id="btn-report-end">終業報告</button>
   </div>
-  <div id="sprint-input-area" style="display:none;margin:16px;">
+
+  <!-- Sprint ID 入力エリア -->
+  <div id="sprint-input-area" style="display:none; margin:16px;">
     <input type="text" id="sprint-id-input" placeholder="Sprint IDを入力" />
     <button id="sprint-submit">取得</button>
   </div>
+
+  <!-- 通知領域 -->
   <div id="notification" class="notification"></div>
-  <div id="view-container"></div>
+
+  <!-- メインビューコンテナ -->
+  <div id="view-container">
+    <!-- ToDo タブ -->
+    <div id="todo-tab" class="tab-content">
+      <!-- タスク追加エリア -->
+      <div class="add-task">
+        <input id="new-todo-input" type="text" placeholder="新しいタスクを入力" />
+        <button id="add-todo-button">追加</button>
+      </div>
+      <!-- ToDo リスト -->
+      <ul id="todo-list"></ul>
+    </div>
+    <!-- Backlog タブ -->
+    <div id="backlog-tab" class="tab-content" style="display:none;">
+      <!-- タスク追加エリア -->
+      <div class="add-task">
+        <input id="new-backlog-input" type="text" placeholder="新しいタスクを入力" />
+        <button id="add-backlog-button">追加</button>
+      </div>
+      <!-- Backlog リスト -->
+      <ul id="backlog-list"></ul>
+    </div>
+  </div>
+
   <script src="renderer.js"></script>
 </body>
 </html>

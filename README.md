@@ -28,6 +28,10 @@ kawanago-jira-todo-app/
 - アプリ内のタスクを Jira の Sprint に新規作成・ステータス更新
 - `"ToDo"` と `"Backlog"` の 2 つの画面をボタンで切り替え（機能は同一）
 - 始業時・終業時に上司用報告レポートを出力
+- タブ内でのタスク追加機能
+  - テキストボックスと「追加」ボタンを配置
+  - Ctrl+Enter ショートカットでタスク追加可能
+- 始業時・終業時に上司用報告レポートを出力
 
 ## 実装済み要件
 - プロジェクト構成の整備（Electron 主プロセス、Renderer、環境変数管理）
@@ -40,4 +44,10 @@ kawanago-jira-todo-app/
 - IPC 経由で Renderer⇔Main 間のデータ連携
 - ToDo／Backlog ビュー切替ボタン UI
 - ToDo のローカル保存（electron-store 連携）
+- タブ内でのタスク追加（テキストボックス・追加ボタン、Ctrl+Enter ショートカット）
 - 始業・終業報告レポート出力テンプレート実装
+
+## 今後の実装予定
+- UI フレームワーク導入（React + Tailwind など）
+- レポートのフォーマット強化（PDF 生成、メール送信）
+- 状態管理ライブラリの導入（Redux/Context）
