@@ -112,8 +112,38 @@ function renderView() {
   todoListEl.innerHTML    = '';
   backlogListEl.innerHTML = '';
 
-  // ToDo リスト描画
-  todos.forEach(item => {
+  // 内部で使う並び替え用関数
+  function enableDragAndDrop(listEl, listArray, storeKey) {
+    let dragSrcIndex = null;
+
+    Array.from(listEl.children).forEach((li, idx) => {
+      li.draggable = true;
+      li.dataset.index = idx;
+
+      li.addEventListener('dragstart', e => {
+        dragSrcIndex = idx;
+        e.dataTransfer.effectAllowed = 'move';
+      });
+      li.addEventListener('dragover', e => {
+        e.preventDefault();
+        e.dataTransfer.dropEffect = 'move';
+      });
+      li.addEventListener('drop', e => {
+        e.preventDefault();
+        const dropTargetIdx = parseInt(li.dataset.index, 10);
+        if (dragSrcIndex === null || dragSrcIndex === dropTargetIdx) return;
+
+        // 配列を入れ替え
+        const [moved] = listArray.splice(dragSrcIndex, 1);
+        listArray.splice(dropTargetIdx, 0, moved);
+        window.electronAPI.store.set(storeKey, listArray);
+        renderView();
+      });
+    });
+  }
+
+  // ToDo リスト描画 + ドラッグ対応
+  todos.forEach((item, idx) => {
     const li = document.createElement('li');
     const checkbox = document.createElement('input');
     checkbox.type    = 'checkbox';
@@ -132,9 +162,10 @@ function renderView() {
     li.appendChild(label);
     todoListEl.appendChild(li);
   });
+  enableDragAndDrop(todoListEl, todos, 'todos');
 
-  // Backlog リスト描画
-  backlog.forEach(item => {
+  // Backlog リスト描画 + ドラッグ対応
+  backlog.forEach((item, idx) => {
     const li = document.createElement('li');
     const checkbox = document.createElement('input');
     checkbox.type    = 'checkbox';
@@ -153,6 +184,7 @@ function renderView() {
     li.appendChild(label);
     backlogListEl.appendChild(li);
   });
+  enableDragAndDrop(backlogListEl, backlog, 'backlog');
 
   // タブ表示切替
   document.getElementById('todo-tab').style.display    = currentView === 'todo'    ? 'block' : 'none';
