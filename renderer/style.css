@@ -8,9 +8,57 @@
   border-radius: 4px;
   display: none;
 }
-#todo-list,
+.section ul,
+.section ol,
 #backlog-list {
   list-style: none;   /* 箇条書きマーカーを消す */
   padding-left: 0;    /* 左余白を詰める */
   margin-left: 0;
+}
+/* セクション共通 */
+.section {
+  margin-bottom: 16px;
+}
+.section h3 {
+  margin: 0 0 4px;
+  font-size: 1rem;
+}
+.section-list {
+  list-style: none;
+  padding: 4px;
+  margin: 0;
+  border: 1px dashed #aaa;
+}
+
+/* マストワン */
+#section-mustone-list {
+  background-color: #fdecea;  /* 薄い赤 */
+  min-height: 24px;
+}
+
+/* 中 */
+#section-medium-list {
+  background-color: #fff4e5;  /* 薄いオレンジ */
+  min-height: 72px;
+}
+
+/* 小 */
+#section-small-list {
+  background-color: #e8f5fd;  /* 薄い青 */
+  min-height: 120px;
+}
+
+/* その他 */
+#section-other-list {
+  background-color: #e6f4ea;  /* 薄い緑 */
+  min-height: 120px;
+}
+
+/* タスク項目 */
+.section-list li {
+  padding: 4px 8px;
+  margin-bottom: 4px;
+  background-color: #ffffff;
+  border: 1px solid #ccc;
+  cursor: move;
 }

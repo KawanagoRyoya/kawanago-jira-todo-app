@@ -36,8 +36,25 @@
         <input id="new-todo-input" type="text" placeholder="新しいタスクを入力" />
         <button id="add-todo-button">追加</button>
       </div>
-      <!-- ToDo リスト -->
-      <ul id="todo-list"></ul>
+      <!-- セクションごとのリスト -->
+      <div class="sections">
+        <div class="section">
+          <h3>マストワン (1件まで)</h3>
+          <ul id="section-mustone-list" class="section-list"></ul>
+        </div>
+        <div class="section">
+          <h3>中 (3件まで)</h3>
+          <ul id="section-medium-list" class="section-list"></ul>
+        </div>
+        <div class="section">
+          <h3>小 (5件まで)</h3>
+          <ul id="section-small-list" class="section-list"></ul>
+        </div>
+        <div class="section">
+          <h3>その他</h3>
+          <ul id="section-other-list" class="section-list"></ul>
+        </div>
+      </div>
     </div>
     <!-- Backlog タブ -->
     <div id="backlog-tab" class="tab-content" style="display:none;">
