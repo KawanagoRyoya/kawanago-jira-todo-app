@@ -1,9 +1,6 @@
 // renderer/renderer.js
 
-// ローカルストレージから読み込み
-let todos   = window.electronAPI.store.get('todos')   || [];
-let backlog = window.electronAPI.store.get('backlog') || [];
-let currentView = 'todo';
+let todos, backlog, currentView = 'todo';
 
 const notification = document.getElementById('notification');
 function showNotification(msg) {
@@ -20,6 +17,14 @@ document.getElementById('btn-todo').addEventListener('click', () => {
 document.getElementById('btn-backlog').addEventListener('click', () => {
   currentView = 'backlog';
   renderView();
+});
+document.getElementById('btn-delete-completed').addEventListener('click', async () => {
+  todos   = todos.filter(t => t.status !== 'Done');
+  backlog = backlog.filter(t => t.status !== 'Done');
+  await window.electronAPI.store.set('todos', todos);
+  await window.electronAPI.store.set('backlog', backlog);
+  renderView();
+  showNotification('完了タスクを削除しました');
 });
 
 // Sprint ID 手動入力
@@ -39,7 +44,7 @@ document.getElementById('sprint-submit').addEventListener('click', async () => {
       dueDate: i.fields.duedate,
       status: 'ToDo'
     }));
-    window.electronAPI.store.set('todos', todos);
+    await window.electronAPI.store.set('todos', todos);
     renderView();
   } catch (err) {
     console.error(err);
@@ -47,7 +52,7 @@ document.getElementById('sprint-submit').addEventListener('click', async () => {
   }
 });
 
-// 始業報告
+// 始業報告：未完了タスクをクリップボードにコピー
 document.getElementById('btn-report-start').addEventListener('click', async () => {
   const pending = todos.filter(t => t.status !== 'Done');
   if (pending.length === 0) {
@@ -60,11 +65,11 @@ document.getElementById('btn-report-start').addEventListener('click', async () =
     showNotification('未完了タスクをクリップボードにコピーしました');
   } catch (err) {
     console.error(err);
-    showNotification('クリップボードへのコピーに失敗しました: ' + err.message);
+    showNotification('コピーに失敗しました: ' + err.message);
   }
 });
 
-// 終業報告（Jira同期＋レポート出力）
+// 終業報告（Jira同期＋レポート）
 document.getElementById('btn-report-end').addEventListener('click', async () => {
   try {
     await window.electronAPI.syncToJira({ todos, backlog });
@@ -72,8 +77,8 @@ document.getElementById('btn-report-end').addEventListener('click', async () => 
     alert(report);
     todos = [];
     backlog = [];
-    window.electronAPI.store.set('todos', todos);
-    window.electronAPI.store.set('backlog', backlog);
+    await window.electronAPI.store.set('todos', todos);
+    await window.electronAPI.store.set('backlog', backlog);
     renderView();
   } catch (err) {
     console.error(err);
@@ -81,124 +86,105 @@ document.getElementById('btn-report-end').addEventListener('click', async () => 
   }
 });
 
-// ── タスク追加機能 ──
+// タスク追加設定
 function setupAddTask(inputId, buttonId, listName) {
   const inputEl  = document.getElementById(inputId);
   const buttonEl = document.getElementById(buttonId);
-
   async function addTask() {
-    const description = inputEl.value.trim();
-    if (!description) return;
-    const item = {
-      description,
-      dueDate: null,
-      status: listName === 'todos' ? 'ToDo' : 'Backlog'
-    };
+    const desc = inputEl.value.trim();
+    if (!desc) return;
+    const item = { description: desc, dueDate: null, status: listName === 'todos' ? 'ToDo' : 'Backlog' };
     if (listName === 'todos') {
       todos.push(item);
-      window.electronAPI.store.set('todos', todos);
+      await window.electronAPI.store.set('todos', todos);
     } else {
       backlog.push(item);
-      window.electronAPI.store.set('backlog', backlog);
+      await window.electronAPI.store.set('backlog', backlog);
     }
     inputEl.value = '';
     renderView();
   }
-
   buttonEl.addEventListener('click', addTask);
   inputEl.addEventListener('keydown', e => {
     if (e.ctrlKey && e.key === 'Enter') addTask();
   });
 }
 
-// ── 画面描画 ──
+// 画面描画
 function renderView() {
   const todoListEl    = document.getElementById('todo-list');
   const backlogListEl = document.getElementById('backlog-list');
   todoListEl.innerHTML    = '';
   backlogListEl.innerHTML = '';
 
-  // 内部で使う並び替え用関数
-  function enableDragAndDrop(listEl, listArray, storeKey) {
-    let dragSrcIndex = null;
-
-    Array.from(listEl.children).forEach((li, idx) => {
-      li.draggable = true;
-      li.dataset.index = idx;
-
-      li.addEventListener('dragstart', e => {
-        dragSrcIndex = idx;
-        e.dataTransfer.effectAllowed = 'move';
-      });
-      li.addEventListener('dragover', e => {
-        e.preventDefault();
-        e.dataTransfer.dropEffect = 'move';
-      });
-      li.addEventListener('drop', e => {
-        e.preventDefault();
-        const dropTargetIdx = parseInt(li.dataset.index, 10);
-        if (dragSrcIndex === null || dragSrcIndex === dropTargetIdx) return;
-
-        // 配列を入れ替え
-        const [moved] = listArray.splice(dragSrcIndex, 1);
-        listArray.splice(dropTargetIdx, 0, moved);
-        window.electronAPI.store.set(storeKey, listArray);
-        renderView();
-      });
-    });
-  }
-
-  // ToDo リスト描画 + ドラッグ対応
-  todos.forEach((item, idx) => {
+  function createListItem(item, listArray, storeKey) {
     const li = document.createElement('li');
+    li.draggable = true;
+
     const checkbox = document.createElement('input');
     checkbox.type    = 'checkbox';
     checkbox.checked = item.status === 'Done';
     const label = document.createElement('span');
     label.textContent = item.description + (item.dueDate ? ` (期限: ${item.dueDate})` : '');
-    if (item.status === 'Done') {
-      label.style.textDecoration = 'line-through';
-    }
-    checkbox.addEventListener('change', () => {
-      item.status = checkbox.checked ? 'Done' : 'ToDo';
-      window.electronAPI.store.set('todos', todos);
+    if (item.status === 'Done') label.style.textDecoration = 'line-through';
+    checkbox.addEventListener('change', async () => {
+      item.status = checkbox.checked ? 'Done' : (storeKey==='todos'?'ToDo':'Backlog');
+      await window.electronAPI.store.set(storeKey, listArray);
       label.style.textDecoration = checkbox.checked ? 'line-through' : 'none';
     });
+
     li.appendChild(checkbox);
     li.appendChild(label);
+    return li;
+  }
+
+  todos.forEach((item, idx) => {
+    const li = createListItem(item, todos, 'todos');
+    li.dataset.index = idx;
     todoListEl.appendChild(li);
   });
   enableDragAndDrop(todoListEl, todos, 'todos');
 
-  // Backlog リスト描画 + ドラッグ対応
   backlog.forEach((item, idx) => {
-    const li = document.createElement('li');
-    const checkbox = document.createElement('input');
-    checkbox.type    = 'checkbox';
-    checkbox.checked = item.status === 'Done';
-    const label = document.createElement('span');
-    label.textContent = item.description + (item.dueDate ? ` (期限: ${item.dueDate})` : '');
-    if (item.status === 'Done') {
-      label.style.textDecoration = 'line-through';
-    }
-    checkbox.addEventListener('change', () => {
-      item.status = checkbox.checked ? 'Done' : 'Backlog';
-      window.electronAPI.store.set('backlog', backlog);
-      label.style.textDecoration = checkbox.checked ? 'line-through' : 'none';
-    });
-    li.appendChild(checkbox);
-    li.appendChild(label);
+    const li = createListItem(item, backlog, 'backlog');
+    li.dataset.index = idx;
     backlogListEl.appendChild(li);
   });
   enableDragAndDrop(backlogListEl, backlog, 'backlog');
 
-  // タブ表示切替
   document.getElementById('todo-tab').style.display    = currentView === 'todo'    ? 'block' : 'none';
   document.getElementById('backlog-tab').style.display = currentView === 'backlog' ? 'block' : 'none';
 }
 
+// ドラッグ＆ドロップ
+function enableDragAndDrop(listEl, listArray, storeKey) {
+  let dragSrcIndex = null;
+  Array.from(listEl.children).forEach((li, idx) => {
+    li.draggable = true;
+    li.dataset.index = idx;
+    li.addEventListener('dragstart', e => {
+      dragSrcIndex = idx;
+      e.dataTransfer.effectAllowed = 'move';
+    });
+    li.addEventListener('dragover', e => {
+      e.preventDefault();
+    });
+    li.addEventListener('drop', async e => {
+      e.preventDefault();
+      const dst = parseInt(li.dataset.index, 10);
+      if (dragSrcIndex===null || dragSrcIndex===dst) return;
+      const [moved] = listArray.splice(dragSrcIndex, 1);
+      listArray.splice(dst, 0, moved);
+      await window.electronAPI.store.set(storeKey, listArray);
+      renderView();
+    });
+  });
+}
+
 // 初期化
-window.addEventListener('DOMContentLoaded', () => {
+window.addEventListener('DOMContentLoaded', async () => {
+  todos   = await window.electronAPI.store.get('todos')   || [];
+  backlog = await window.electronAPI.store.get('backlog') || [];
   setupAddTask('new-todo-input',    'add-todo-button',    'todos');
   setupAddTask('new-backlog-input', 'add-backlog-button', 'backlog');
   renderView();
