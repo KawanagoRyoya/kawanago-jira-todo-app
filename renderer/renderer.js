@@ -49,12 +49,18 @@ document.getElementById('sprint-submit').addEventListener('click', async () => {
 
 // 始業報告
 document.getElementById('btn-report-start').addEventListener('click', async () => {
+  const pending = todos.filter(t => t.status !== 'Done');
+  if (pending.length === 0) {
+    showNotification('未完了タスクはありません');
+    return;
+  }
+  const text = pending.map(t => `・ ${t.description}`).join('\n');
   try {
-    const report = await window.electronAPI.generateReport('start', todos);
-    alert(report);
+    await window.electronAPI.copyText(text);
+    showNotification('未完了タスクをクリップボードにコピーしました');
   } catch (err) {
     console.error(err);
-    showNotification('始業報告失敗: ' + err.message);
+    showNotification('クリップボードへのコピーに失敗しました: ' + err.message);
   }
 });
 

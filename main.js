@@ -4,7 +4,7 @@ process.env.HTTPS_PROXY = '';
 process.env.NO_PROXY = '*';
 
 require('dotenv').config();
-const { app, BrowserWindow, ipcMain } = require('electron');
+const { app, BrowserWindow, ipcMain, clipboard } = require('electron');
 const path = require('path');
 const axios = require('axios');
 const Store = require('electron-store');
@@ -67,3 +67,8 @@ ipcMain.handle('sync-to-jira', async (_, changes) => {
 function mapStatusToTransitionId(status) {
   return { 'ToDo': '11', 'Done': '31' }[status] || '11';
 }
+
+// ── クリップボードコピー ──
+ipcMain.handle('copy-to-clipboard', (_, text) => {
+  clipboard.writeText(text);
+});
