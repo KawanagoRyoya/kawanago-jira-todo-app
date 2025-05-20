@@ -79,20 +79,24 @@ document.getElementById('btn-report-start').addEventListener('click', async () =
   }
 });
 
-// 終業報告（Jira同期＋レポート生成）
+// 終業報告（レポート生成）
 document.getElementById('btn-report-end').addEventListener('click', async () => {
   try {
-    await window.electronAPI.syncToJira({ todos, backlog });
-    const report = await window.electronAPI.generateReport('end', todos);
-    alert(report);
-    todos   = [];
-    backlog = [];
-    await window.electronAPI.store.set('todos', todos);
-    await window.electronAPI.store.set('backlog', backlog);
-    renderView();
+    // 完了タスク／未完了タスクを分離
+    const completed = todos.filter(t => t.status === 'Done');
+    const pending   = todos.filter(t => t.status !== 'Done');
+
+    // テキスト整形
+    const completedText = completed.map(t => `・ ${t.description}`).join('\n');
+    const pendingText   = pending.map(t => `・ ${t.description}`).join('\n');
+    const reportText = `<完了>\n${completedText}\n\n<継続>\n${pendingText}`;
+
+    // クリップボードにコピー
+    await window.electronAPI.copyText(reportText);
+    showNotification('終業報告レポートをクリップボードにコピーしました');
   } catch (err) {
     console.error(err);
-    showNotification('終業処理失敗: ' + err.message);
+    showNotification('終業報告コピーに失敗しました: ' + err.message);
   }
 });
 
