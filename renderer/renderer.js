@@ -62,17 +62,29 @@ document.getElementById('sprint-submit').addEventListener('click', async () => {
   }
 });
 
-// 始業報告：未完了タスクをクリップボードへコピー
+// 始業報告：セクション別テンプレートでクリップボードへコピー
 document.getElementById('btn-report-start').addEventListener('click', async () => {
-  const pending = todos.filter(t => t.status !== 'Done');
-  if (pending.length === 0) {
+  const sections = [
+    { key: 'mustone', label: 'マストワン' },
+    { key: 'medium',  label: '中' },
+    { key: 'small',   label: '小' }
+  ];
+  let reportLines = [];
+  for (const sec of sections) {
+    const tasks = todos.filter(t => t.status !== 'Done' && t.section === sec.key);
+    if (tasks.length > 0) {
+      reportLines.push(`<${sec.label}>`);
+      reportLines.push(...tasks.map(t => `・ ${t.description}`));
+    }
+  }
+  if (reportLines.length === 0) {
     showNotification('未完了タスクはありません');
     return;
   }
-  const text = pending.map(t => `・ ${t.description}`).join('\n');
+  const reportText = reportLines.join('\n');
   try {
-    await window.electronAPI.copyText(text);
-    showNotification('未完了タスクをクリップボードにコピーしました');
+    await window.electronAPI.copyText(reportText);
+    showNotification('始業報告レポートをクリップボードにコピーしました');
   } catch (err) {
     console.error(err);
     showNotification('コピーに失敗しました: ' + err.message);
