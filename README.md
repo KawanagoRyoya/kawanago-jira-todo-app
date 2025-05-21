@@ -74,8 +74,45 @@ kawanago-jira-todo-app/
   - 未完了タスク1
   - 未完了タスク2
 
+## デザインコンセプト
+- ニューモーフィズム
+- メインカラー：青
+- 強調用に青と相性の良い淡いグラデーションを使用
+
+## UI配置
+- Row1（上部）
+  - ToDo ボタン（ToDo）
+  - Backlog ボタン（Backlog）
+  - 通知領域（エラー・完了メッセージ用）
+- Row2
+  - タスク追加テキストボックス（Placeholder: New Task）
+  - 追加ボタン（Add）
+- Row3
+  - セクション：
+    - MustOne（Max 1）
+    - Medium – Max 3
+    - Small – Max 5
+    - Other（無制限）
+  - エリア内スクロール可能
+- Row4
+  - Sprint取得ボタン（アイコン: 🗂️）
+    - クリックで Sprint ID 入力欄表示（Placeholder: Your Sprint ID）
+    - 「Add」でタスク取得
+  - 完了タスク削除ボタン（アイコン: 🗑️）
+- Row5
+  - 始業報告ボタン（Start Work）
+  - 就業報告ボタン（Finish Work）
 
 ## 今後の実装予定
-- UI フレームワーク導入（React + Tailwind など）
-- レポートのフォーマット強化（PDF 生成、メール送信）
+- UI
+  - ToDoとBacklogのタスクの幅を合わせる
+  - Sprint ID入力ボタンをもう一度クリックすると隠れる
+  - タスクの入力箇所の横幅調節
+  - Notificationの表示改善
+- Jira連携機能
+  - 新規チケットの作成
+  - タスクのアップデート（タイトル/ステータス）
+- タスクの詳細（Description/Label/親Epic etc.）
+  - 表示機能
+  - 変更機能
 - 状態管理ライブラリの導入（Redux/Context）

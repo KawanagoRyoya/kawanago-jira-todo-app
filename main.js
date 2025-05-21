@@ -4,7 +4,7 @@ process.env.HTTPS_PROXY = '';
 process.env.NO_PROXY = '*';
 
 require('dotenv').config();
-const { app, BrowserWindow, ipcMain, clipboard } = require('electron');
+const { app, BrowserWindow, ipcMain, clipboard, screen } = require('electron');
 const path = require('path');
 const axios = require('axios');
 const Store = require('electron-store');
@@ -24,9 +24,15 @@ const jiraClient = axios.create({
 });
 
 function createWindow() {
+  // メインディスプレイの作業領域サイズを取得
+  const { width: screenWidth, height: screenHeight } = screen.getPrimaryDisplay().workAreaSize;
+  // 幅を画面幅の33%、高さを画面高さの80%に
+  const winWidth  = Math.floor(screenWidth * 0.33);
+  const winHeight = Math.floor(screenHeight * 0.8);
+
   const win = new BrowserWindow({
-    width: 1024,
-    height: 768,
+    width: winWidth,
+    height: winHeight,
     webPreferences: {
       preload: path.join(__dirname, 'preload.js'),
       contextIsolation: true,
@@ -48,8 +54,7 @@ ipcMain.handle('electron-store-get', async (_, key) => {
      return [];
    }
    return value;
- });
- 
+});
 ipcMain.handle('electron-store-set', async (_, key, val) => {
   store.set(key, val);
 });

@@ -8,22 +8,33 @@ const sectionLimit = {
   mustone: 1,
   medium:  3,
   small:   5,
-  other: Infinity
+  other:  Infinity
 };
 
+// 通知表示
 const notification = document.getElementById('notification');
 function showNotification(msg) {
+  const notification = document.getElementById('notification');
+  if (!notification) return;       // 要素が無ければ何もしない
   notification.textContent = msg;
   notification.style.display = 'block';
   setTimeout(() => notification.style.display = 'none', 3000);
 }
 
-// ── ツールバー ──
+// ナビボタンのアクティブ切替
+function setActiveNav(activeId) {
+  document.querySelectorAll('.nav-btn').forEach(el => el.classList.remove('active'));
+  document.getElementById(activeId).classList.add('active');
+}
+
+// ── ツールバーイベント ──
 document.getElementById('btn-todo').addEventListener('click', () => {
+  setActiveNav('btn-todo');
   currentView = 'todo';
   renderView();
 });
 document.getElementById('btn-backlog').addEventListener('click', () => {
+  setActiveNav('btn-backlog');
   currentView = 'backlog';
   renderView();
 });
@@ -32,19 +43,23 @@ document.getElementById('btn-delete-completed').addEventListener('click', async 
   backlog = backlog.filter(t => t.status !== 'Done');
   await window.electronAPI.store.set('todos', todos);
   await window.electronAPI.store.set('backlog', backlog);
-  renderView();
   showNotification('完了タスクを削除しました');
+  renderView();
 });
 
-// Sprint ID 手動入力
-const sprintInputArea = document.getElementById('sprint-input-area');
+// Sprint取得 → 入力欄表示
+const sprintInputEl  = document.getElementById('sprint-id-input');
+const sprintSubmitEl = document.getElementById('sprint-submit');
 document.getElementById('btn-fetch').addEventListener('click', () => {
-  sprintInputArea.style.display = 'block';
+  setActiveNav('btn-fetch');
+  sprintInputEl.style.display  = 'block';
+  sprintSubmitEl.style.display = 'block';
 });
-document.getElementById('sprint-submit').addEventListener('click', async () => {
-  const sprintId = document.getElementById('sprint-id-input').value.trim();
+sprintSubmitEl.addEventListener('click', async () => {
+  const sprintId = sprintInputEl.value.trim();
   if (!sprintId) return;
-  sprintInputArea.style.display = 'none';
+  sprintInputEl.style.display  = 'none';
+  sprintSubmitEl.style.display = 'none';
   try {
     const issues = await window.electronAPI.fetchSprint(sprintId);
     todos = issues.map(i => ({
@@ -62,28 +77,28 @@ document.getElementById('sprint-submit').addEventListener('click', async () => {
   }
 });
 
-// 始業報告：セクション別テンプレートでクリップボードへコピー
+// 始業報告
 document.getElementById('btn-report-start').addEventListener('click', async () => {
-  const sections = [
+  const sectionsInfo = [
     { key: 'mustone', label: 'マストワン' },
     { key: 'medium',  label: '中' },
     { key: 'small',   label: '小' }
   ];
-  let reportLines = [];
-  for (const sec of sections) {
-    const tasks = todos.filter(t => t.status !== 'Done' && t.section === sec.key);
-    if (tasks.length > 0) {
-      reportLines.push(`<${sec.label}>`);
-      reportLines.push(...tasks.map(t => `・ ${t.description}`));
+  let lines = [];
+  for (const sec of sectionsInfo) {
+    const list = todos.filter(t => t.status !== 'Done' && t.section === sec.key);
+    if (list.length) {
+      lines.push(`<${sec.label}>`);
+      lines.push(...list.map(t => `・ ${t.description}`));
     }
   }
-  if (reportLines.length === 0) {
+  if (!lines.length) {
     showNotification('未完了タスクはありません');
     return;
   }
-  const reportText = reportLines.join('\n');
+  const text = lines.join('\n');
   try {
-    await window.electronAPI.copyText(reportText);
+    await window.electronAPI.copyText(text);
     showNotification('始業報告レポートをクリップボードにコピーしました');
   } catch (err) {
     console.error(err);
@@ -91,14 +106,14 @@ document.getElementById('btn-report-start').addEventListener('click', async () =
   }
 });
 
-// 終業報告（レポート生成）
+// 就業報告
 document.getElementById('btn-report-end').addEventListener('click', async () => {
   try {
     const completed = todos.filter(t => t.status === 'Done');
     const pending   = todos.filter(t => t.status !== 'Done');
-    const completedText = completed.map(t => `・ ${t.description}`).join('\n');
-    const pendingText   = pending.map(t => `・ ${t.description}`).join('\n');
-    const reportText = `<完了>\n${completedText}\n\n<継続>\n${pendingText}`;
+    const compText  = completed.map(t => `・ ${t.description}`).join('\n');
+    const pendText  = pending  .map(t => `・ ${t.description}`).join('\n');
+    const reportText = `<完了>\n${compText}\n\n<継続>\n${pendText}`;
     await window.electronAPI.copyText(reportText);
     showNotification('終業報告レポートをクリップボードにコピーしました');
   } catch (err) {
@@ -107,11 +122,10 @@ document.getElementById('btn-report-end').addEventListener('click', async () => 
   }
 });
 
-// ── タスク追加機能 ──
+// ── タスク追加設定 ──
 function setupAddTask(inputId, buttonId, listName) {
   const inputEl  = document.getElementById(inputId);
   const buttonEl = document.getElementById(buttonId);
-
   async function addTask() {
     const desc = inputEl.value.trim();
     if (!desc) return;
@@ -131,140 +145,118 @@ function setupAddTask(inputId, buttonId, listName) {
     inputEl.value = '';
     renderView();
   }
-
   buttonEl.addEventListener('click', addTask);
   inputEl.addEventListener('keydown', e => {
     if (e.ctrlKey && e.key === 'Enter') addTask();
   });
 }
 
-// ── 画面描画 ──
-function renderView() {
-  document.getElementById('todo-tab').style.display    = currentView === 'todo'    ? 'block' : 'none';
-  document.getElementById('backlog-tab').style.display = currentView === 'backlog' ? 'block' : 'none';
-
-  const sections = {
-    mustone:  document.getElementById('section-mustone-list'),
-    medium:   document.getElementById('section-medium-list'),
-    small:    document.getElementById('section-small-list'),
-    other:    document.getElementById('section-other-list')
+// ── ToDo セクション描画 ──
+function renderTodoSections() {
+  const sectionsEls = {
+    mustone: document.getElementById('section-mustone-list'),
+    medium:  document.getElementById('section-medium-list'),
+    small:   document.getElementById('section-small-list'),
+    other:   document.getElementById('section-other-list')
   };
-  const backlogEl = document.getElementById('backlog-list');
-
-  // クリア
-  Object.values(sections).forEach(el => el.innerHTML = '');
-  backlogEl.innerHTML = '';
-
-  // ToDo セクション描画
+  Object.values(sectionsEls).forEach(el => el.innerHTML = '');
   todos.forEach((item, idx) => {
     const li = document.createElement('li');
     li.dataset.todoIndex = idx;
 
-    const checkbox = document.createElement('input');
-    checkbox.type    = 'checkbox';
-    checkbox.checked = item.status === 'Done';
+    // 完了チェック
+    const cb = document.createElement('input');
+    cb.type    = 'checkbox';
+    cb.checked = item.status === 'Done';
+    cb.addEventListener('change', async () => {
+      item.status = cb.checked ? 'Done' : 'ToDo';
+      await window.electronAPI.store.set('todos', todos);
+      renderView();
+    });
 
-    const label = document.createElement('span');
-    label.textContent = item.description + (item.dueDate ? ` (期限: ${item.dueDate})` : '');
-    if (item.status === 'Done') label.style.textDecoration = 'line-through';
-
-    // ラベルのダブルクリックで編集モード
-    label.addEventListener('dblclick', () => {
-      const input = document.createElement('input');
-      input.type = 'text';
-      input.value = item.description;
-      input.addEventListener('keydown', async e => {
-        if (e.key === 'Enter') {
-          item.description = input.value.trim() || item.description;
-          await window.electronAPI.store.set('todos', todos);
-          renderView();
-        } else if (e.key === 'Escape') {
+    // 編集（ダブルクリック）
+    const lbl = document.createElement('span');
+    lbl.textContent = item.description;
+    if (item.status === 'Done') lbl.style.textDecoration = 'line-through';
+    lbl.addEventListener('dblclick', () => {
+      const inp = document.createElement('input');
+      inp.type  = 'text';
+      inp.value = item.description;
+      inp.addEventListener('keydown', async e => {
+        if (e.key === 'Enter' || e.key === 'Escape') {
+          if (e.key === 'Enter') {
+            item.description = inp.value.trim() || item.description;
+            await window.electronAPI.store.set('todos', todos);
+          }
           renderView();
         }
       });
-      input.addEventListener('blur', async () => {
-        item.description = input.value.trim() || item.description;
+      inp.addEventListener('blur', async () => {
+        item.description = inp.value.trim() || item.description;
         await window.electronAPI.store.set('todos', todos);
         renderView();
       });
-      li.replaceChild(input, label);
-      input.focus();
+      li.replaceChild(inp, lbl);
+      inp.focus();
     });
 
-    checkbox.addEventListener('change', async () => {
-      item.status = checkbox.checked ? 'Done' : 'ToDo';
-      await window.electronAPI.store.set('todos', todos);
-      label.style.textDecoration = checkbox.checked ? 'line-through' : 'none';
-    });
-
-    li.append(checkbox, label);
-
-    // dragstart/dragend を要素生成ごとに
+    li.append(cb, lbl);
     li.draggable = true;
     li.addEventListener('dragstart', e => {
-      e.dataTransfer.setData('text/plain', li.dataset.todoIndex);
+      e.dataTransfer.setData('text/plain', idx);
       li.classList.add('dragging');
     });
     li.addEventListener('dragend', () => {
       li.classList.remove('dragging');
     });
 
-    sections[item.section].appendChild(li);
+    sectionsEls[item.section].appendChild(li);
   });
+}
 
-  // Backlog セクション描画
+// ── Backlog リスト描画 ──
+function renderBacklogList() {
+  const ul = document.getElementById('backlog-list');
+  ul.innerHTML = '';
   backlog.forEach((item, idx) => {
     const li = document.createElement('li');
 
-    const checkbox = document.createElement('input');
-    checkbox.type    = 'checkbox';
-    checkbox.checked = item.status === 'Done';
+    const cb = document.createElement('input');
+    cb.type    = 'checkbox';
+    cb.checked = item.status === 'Done';
+    cb.addEventListener('change', async () => {
+      item.status = cb.checked ? 'Done' : 'Backlog';
+      await window.electronAPI.store.set('backlog', backlog);
+      renderView();
+    });
 
-    const label = document.createElement('span');
-    label.textContent = item.description + (item.dueDate ? ` (期限: ${item.dueDate})` : '');
-    if (item.status === 'Done') label.style.textDecoration = 'line-through';
-
-    // ラベルのダブルクリックで編集モード
-    label.addEventListener('dblclick', () => {
-      const input = document.createElement('input');
-      input.type = 'text';
-      input.value = item.description;
-      input.addEventListener('keydown', async e => {
-        if (e.key === 'Enter') {
-          item.description = input.value.trim() || item.description;
-          await window.electronAPI.store.set('backlog', backlog);
-          renderView();
-        } else if (e.key === 'Escape') {
+    const lbl = document.createElement('span');
+    lbl.textContent = item.description;
+    if (item.status === 'Done') lbl.style.textDecoration = 'line-through';
+    lbl.addEventListener('dblclick', () => {
+      const inp = document.createElement('input');
+      inp.type  = 'text';
+      inp.value = item.description;
+      inp.addEventListener('keydown', async e => {
+        if (e.key === 'Enter' || e.key === 'Escape') {
+          if (e.key === 'Enter') {
+            item.description = inp.value.trim() || item.description;
+            await window.electronAPI.store.set('backlog', backlog);
+          }
           renderView();
         }
       });
-      input.addEventListener('blur', async () => {
-        item.description = input.value.trim() || item.description;
+      inp.addEventListener('blur', async () => {
+        item.description = inp.value.trim() || item.description;
         await window.electronAPI.store.set('backlog', backlog);
         renderView();
       });
-      li.replaceChild(input, label);
-      input.focus();
+      li.replaceChild(inp, lbl);
+      inp.focus();
     });
 
-    checkbox.addEventListener('change', async () => {
-      item.status = checkbox.checked ? 'Done' : 'Backlog';
-      await window.electronAPI.store.set('backlog', backlog);
-      label.style.textDecoration = checkbox.checked ? 'line-through' : 'none';
-    });
-
-    li.append(checkbox, label);
-
-    li.draggable = true;
-    li.addEventListener('dragstart', e => {
-      e.dataTransfer.setData('text/plain', li.dataset.todoIndex);
-      li.classList.add('dragging');
-    });
-    li.addEventListener('dragend', () => {
-      li.classList.remove('dragging');
-    });
-
-    backlogEl.appendChild(li);
+    li.append(cb, lbl);
+    ul.appendChild(li);
   });
 }
 
@@ -273,22 +265,36 @@ async function handleDropEvent(e, sectionKey) {
   e.preventDefault();
   const srcIdx = parseInt(e.dataTransfer.getData('text/plain'), 10);
   if (isNaN(srcIdx)) return;
-
-  const srcItem = todos[srcIdx];
-  const targetCount = todos.filter(t => t.section === sectionKey).length;
-  if (sectionLimit[sectionKey] < targetCount + (srcItem.section !== sectionKey ? 1 : 0)) {
+  const item = todos[srcIdx];
+  const count = todos.filter(t => t.section === sectionKey).length;
+  if (sectionLimit[sectionKey] < count + (item.section !== sectionKey ? 1 : 0)) {
     showNotification('セクションの上限を超えています');
     return;
   }
-
   todos.splice(srcIdx, 1);
-  srcItem.section = sectionKey;
-  todos.push(srcItem);
-
+  item.section = sectionKey;
+  todos.push(item);
   await window.electronAPI.store.set('todos', todos);
   renderView();
 }
 
+// ── 表示切替 ──
+function renderView() {
+  // Row2
+  document.getElementById('todo-add-container').style.display    = currentView === 'todo'    ? 'flex' : 'none';
+  document.getElementById('backlog-add-container').style.display = currentView === 'backlog' ? 'flex' : 'none';
+  // Row3
+  document.getElementById('todo-view').style.display    = currentView === 'todo'    ? 'flex' : 'none';
+  document.getElementById('backlog-view').style.display = currentView === 'backlog' ? 'flex' : 'none';
+
+  if (currentView === 'todo') {
+    renderTodoSections();
+  } else {
+    renderBacklogList();
+  }
+}
+
+// ── 初期化 ──
 window.addEventListener('DOMContentLoaded', async () => {
   todos   = (await window.electronAPI.store.get('todos'))   || [];
   backlog = (await window.electronAPI.store.get('backlog')) || [];
@@ -297,7 +303,7 @@ window.addEventListener('DOMContentLoaded', async () => {
   setupAddTask('new-todo-input',    'add-todo-button',    'todos');
   setupAddTask('new-backlog-input', 'add-backlog-button', 'backlog');
 
-  // セクションごとに dragover/drop を一度だけ登録
+  // ドロップ先を一度だけ登録
   const sections = {
     mustone:  document.getElementById('section-mustone-list'),
     medium:   document.getElementById('section-medium-list'),
@@ -305,6 +311,7 @@ window.addEventListener('DOMContentLoaded', async () => {
     other:    document.getElementById('section-other-list')
   };
   Object.entries(sections).forEach(([key, listEl]) => {
+    if (!listEl) return;
     listEl.addEventListener('dragover', e => e.preventDefault());
     listEl.addEventListener('drop', e => handleDropEvent(e, key));
   });

@@ -1,4 +1,3 @@
-<!-- renderer/index.html -->
 <!DOCTYPE html>
 <html lang="ja">
 <head>
@@ -7,64 +6,66 @@
   <link rel="stylesheet" href="style.css" />
 </head>
 <body>
-  <!-- ツールバー -->
-  <div class="toolbar">
-    <button id="btn-todo">ToDo</button>
-    <button id="btn-backlog">Backlog</button>
-    <button id="btn-fetch">Sprint 取得</button>
-    <button id="btn-report-start">始業報告</button>
-    <button id="btn-report-end">終業報告</button>
-    <!-- 完了タスク削除ボタン追加 -->
-    <button id="btn-delete-completed">完了タスク削除</button>
-  </div>
-
-  <!-- Sprint ID 入力エリア -->
-  <div id="sprint-input-area" style="display:none; margin:16px;">
-    <input type="text" id="sprint-id-input" placeholder="Sprint IDを入力" />
-    <button id="sprint-submit">取得</button>
-  </div>
-
-  <!-- 通知領域 -->
-  <div id="notification" class="notification"></div>
-
-  <!-- メインビューコンテナ -->
-  <div id="view-container">
-    <!-- ToDo タブ -->
-    <div id="todo-tab" class="tab-content">
-      <!-- タスク追加エリア -->
-      <div class="add-task">
-        <input id="new-todo-input" type="text" placeholder="新しいタスクを入力" />
-        <button id="add-todo-button">追加</button>
+  <div class="app-container">
+    <!-- Row1: ナビゲーション -->
+    <!-- 通知領域 -->
+    <div id="notification" class="notification" style="display:none"></div>
+    <div class="toolbar">
+      <button id="btn-fetch" class="icon-btn nav-btn left-icon"><span class="icon">🗂️</span></button>
+      <div class="nav-center">
+        <button id="btn-todo" class="btn nav-btn active">ToDo</button>
+        <button id="btn-backlog" class="btn nav-btn">Backlog</button>
       </div>
-      <!-- セクションごとのリスト -->
-      <div class="sections">
-        <div class="section">
-          <h3>マストワン (1件まで)</h3>
-          <ul id="section-mustone-list" class="section-list"></ul>
-        </div>
-        <div class="section">
-          <h3>中 (3件まで)</h3>
-          <ul id="section-medium-list" class="section-list"></ul>
-        </div>
-        <div class="section">
-          <h3>小 (5件まで)</h3>
-          <ul id="section-small-list" class="section-list"></ul>
-        </div>
-        <div class="section">
-          <h3>その他</h3>
-          <ul id="section-other-list" class="section-list"></ul>
-        </div>
+      <button id="btn-delete-completed" class="icon-btn nav-btn right-icon"><span class="icon">🗑️</span></button>
+    </div>
+    <!-- Row1': Sprint ID 入力（初期非表示） -->
+    <div class="sprint-container">
+      <input id="sprint-id-input" class="input sprint-input" type="text" placeholder="Your Sprint ID" style="display:none" />
+      <button id="sprint-submit" class="btn sprint-submit" style="display:none">Add</button>
+    </div>
+
+    <!-- Row2: ToDo 用タスク追加 -->
+    <div id="todo-add-container" class="add-container">
+      <input id="new-todo-input" class="input" type="text" placeholder="New Task" />
+      <button id="add-todo-button" class="btn">Add</button>
+    </div>
+
+    <!-- Row2′: Backlog 用タスク追加（最初は隠す） -->
+    <div id="backlog-add-container" class="add-container" style="display:none">
+      <input id="new-backlog-input" class="input" type="text" placeholder="New Task" />
+      <button id="add-backlog-button" class="btn">Add</button>
+    </div>
+
+    <!-- Row3: ToDo 用セクション群 -->
+    <div id="todo-view" class="sections">
+      <!-- MustOne～Other セクション -->
+      <div class="section">
+        <h3>MustOne</h3>
+        <ul id="section-mustone-list" class="section-list"></ul>
+      </div>
+      <div class="section">
+        <h3>Medium - Max 3</h3>
+        <ul id="section-medium-list" class="section-list"></ul>
+      </div>
+      <div class="section">
+        <h3>Small - Max 5</h3>
+        <ul id="section-small-list" class="section-list"></ul>
+      </div>
+      <div class="section">
+        <h3>Other</h3>
+        <ul id="section-other-list" class="section-list"></ul>
       </div>
     </div>
-    <!-- Backlog タブ -->
-    <div id="backlog-tab" class="tab-content" style="display:none;">
-      <!-- タスク追加エリア -->
-      <div class="add-task">
-        <input id="new-backlog-input" type="text" placeholder="新しいタスクを入力" />
-        <button id="add-backlog-button">追加</button>
-      </div>
-      <!-- Backlog リスト -->
-      <ul id="backlog-list"></ul>
+
+    <!-- Row3′: Backlog 用リスト（最初は隠す） -->
+    <div id="backlog-view" class="sections" style="display:none">
+      <ul id="backlog-list" class="section-list"></ul>
+    </div>
+
+    <!-- Row5: レポート -->
+    <div class="report-row">
+      <button id="btn-report-start" class="btn">Start Work</button>
+      <button id="btn-report-end" class="btn">Finish Work</button>
     </div>
   </div>
 
