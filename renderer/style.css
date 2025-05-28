@@ -1,5 +1,10 @@
 /* style.css */
 
+/* 全体のフォントを Zen Kaku Gothic New に */
+body, div, input, button, select, textarea {
+  font-family: 'Zen Kaku Gothic New', sans-serif;
+}
+
 /* アプリ全体を中央寄せ */
 .app-container {
   max-width: 600px;
