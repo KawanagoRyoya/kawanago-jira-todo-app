@@ -109,10 +109,18 @@ kawanago-jira-todo-app/
   - Sprint ID入力ボタンをもう一度クリックすると隠れる
   - タスクの入力箇所の横幅調節
   - Notificationの表示改善
+  - チェックボックスのCSSアップデート
 - Jira連携機能
-  - 新規チケットの作成
-  - タスクのアップデート（タイトル/ステータス）
+  - BacklogからEpicを作成することができる
+  - BacklogからTaskを作成することができる
+- ToDoとBacklogの移動ができる
+- 実績確認機能
+  - ToDoAppで完了したToDoの実績を記録できる
+    - Jira上で見られるのが良い
 - タスクの詳細（Description/Label/親Epic etc.）
-  - 表示機能
-  - 変更機能
+  - マストワンタスクのLabelをつけることができる
+  - PJ名/Epic名のLabelをつけることができる ※優先度Low
 - 状態管理ライブラリの導入（Redux/Context）
+- 微改善
+  - ショートカットキーの充実
+    - ctrl+1+enter で MustOneに直接追加できる など
