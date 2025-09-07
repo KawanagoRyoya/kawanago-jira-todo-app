@@ -73,6 +73,7 @@ kawanago-jira-todo-app/
   - <継続>
   - 未完了タスク1
   - 未完了タスク2
+- ToDoとBacklogの移動ができる
 
 ## デザインコンセプト
 - ニューモーフィズム
@@ -113,7 +114,6 @@ kawanago-jira-todo-app/
 - Jira連携機能
   - BacklogからEpicを作成することができる
   - BacklogからTaskを作成することができる
-- ToDoとBacklogの移動ができる
 - 実績確認機能
   - ToDoAppで完了したToDoの実績を記録できる
     - Jira上で見られるのが良い

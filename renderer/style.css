@@ -162,3 +162,20 @@ body, div, input, button, select, textarea {
   width: 100%;
   box-sizing: border-box;
 }
+
+/* タスク行を右端ボタン込みでレイアウト */
+.section-list li,
+#backlog-list li {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+/* 右端へ押し出し */
+.move-btn {
+  margin-left: auto;
+  padding: 4px 10px;
+  min-width: auto;
+  line-height: 1.1;
+  font-size: 1.125rem; 
+}

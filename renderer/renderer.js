@@ -200,7 +200,14 @@ function renderTodoSections() {
       inp.focus();
     });
 
-    li.append(cb, lbl);
+    // 右端：Backlogへ移動ボタン
+    const moveBtn = document.createElement('button');
+    moveBtn.className = 'icon-btn move-btn';
+    moveBtn.title = 'Backlogへ移動';
+    moveBtn.textContent = '📥';
+    moveBtn.addEventListener('click', () => moveTodoToBacklog(idx));
+
+    li.append(cb, lbl, moveBtn);
     li.draggable = true;
     li.addEventListener('dragstart', e => {
       e.dataTransfer.setData('text/plain', idx);
@@ -255,9 +262,42 @@ function renderBacklogList() {
       inp.focus();
     });
 
-    li.append(cb, lbl);
+    // 右端：ToDoへ移動ボタン（初期は Other に入る）
+    const moveBtn = document.createElement('button');
+    moveBtn.className = 'icon-btn move-btn';
+    moveBtn.title = 'ToDoへ移動';
+    moveBtn.textContent = '📤';
+    moveBtn.addEventListener('click', () => moveBacklogToTodo(idx));
+
+    li.append(cb, lbl, moveBtn);
     ul.appendChild(li);
   });
+}
+
+//　── ToDo ⇔ Backlog 移動 ──
+async function moveTodoToBacklog(todoIndex) {
+  const moved = todos.splice(todoIndex, 1)[0];
+  if (!moved) return;
+  moved.section = undefined;
+  moved.status  = 'Backlog';
+  backlog.push(moved);
+  await window.electronAPI.store.set('todos', todos);
+  await window.electronAPI.store.set('backlog', backlog);
+  showNotification('ToDo → Backlog に移動しました');
+  renderView();
+}
+
+// ── Backlog → ToDo 移動 ──
+async function moveBacklogToTodo(backlogIndex) {
+  const moved = backlog.splice(backlogIndex, 1)[0];
+  if (!moved) return;
+  moved.section = 'other';  // 初期は Other
+  moved.status  = 'ToDo';
+  todos.push(moved);
+  await window.electronAPI.store.set('todos', todos);
+  await window.electronAPI.store.set('backlog', backlog);
+  showNotification('Backlog → ToDo に移動しました');
+  renderView();
 }
 
 // ── ドロップ処理を一度だけ登録 ──
