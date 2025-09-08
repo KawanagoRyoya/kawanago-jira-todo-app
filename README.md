@@ -30,6 +30,9 @@ kawanago-jira-todo-app/
 - タブ内でのタスク追加機能
   - テキストボックスと「追加」ボタンを配置
   - Ctrl+Enter ショートカットでタスク追加可能
+    - Ctrl+1+Enter で MustOne に追加
+    - Ctrl+2+Enter で Medium に追加
+    - Ctrl+3+Enter で Small に追加
 - タスクのドラッグ＆ドロップによる順序変更
   - 同じタブ内でタスクをドラッグして並び替え可能
 - タスク名編集
@@ -56,7 +59,7 @@ kawanago-jira-todo-app/
   - 各セクションの容量を超える移動はブロックし通知
 - Backlog セクション（従来どおり）
 - ToDo のローカル保存（electron-store 連携）
-- タブ内でのタスク追加（テキストボックス・追加ボタン、Ctrl+Enter ショートカット）
+- タブ内でのタスク追加（テキストボックス・追加ボタン、Ctrl+Enter / Ctrl+1+Enter / Ctrl+2+Enter / Ctrl+3+Enter ショートカット）
 - タスク完了機能（チェックボックス＋取り消し線表示）
 - タスクのドラッグ＆ドロップによる順序変更
 - 完了タスク削除機能
@@ -121,6 +124,5 @@ kawanago-jira-todo-app/
   - マストワンタスクのLabelをつけることができる
   - PJ名/Epic名のLabelをつけることができる ※優先度Low
 - 状態管理ライブラリの導入（Redux/Context）
-- 微改善
-  - ショートカットキーの充実
-    - ctrl+1+enter で MustOneに直接追加できる など
+  - 微改善
+    - ショートカットキーの充実

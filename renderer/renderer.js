@@ -126,15 +126,27 @@ document.getElementById('btn-report-end').addEventListener('click', async () => 
 function setupAddTask(inputId, buttonId, listName) {
   const inputEl  = document.getElementById(inputId);
   const buttonEl = document.getElementById(buttonId);
-  async function addTask() {
+  let shortcutNum = null;
+
+  async function addTask(section = 'other') {
     const desc = inputEl.value.trim();
     if (!desc) return;
+
+    if (listName === 'todos') {
+      const count = todos.filter(t => t.section === section).length;
+      if (sectionLimit[section] <= count) {
+        showNotification('セクションの上限を超えています');
+        return;
+      }
+    }
+
     const item = {
       description: desc,
       dueDate:     null,
       status:      'ToDo',
-      section:     listName === 'todos' ? 'other' : undefined
+      section:     listName === 'todos' ? section : undefined
     };
+
     if (listName === 'todos') {
       todos.push(item);
       await window.electronAPI.store.set('todos', todos);
@@ -142,12 +154,31 @@ function setupAddTask(inputId, buttonId, listName) {
       backlog.push(item);
       await window.electronAPI.store.set('backlog', backlog);
     }
+
     inputEl.value = '';
     renderView();
   }
-  buttonEl.addEventListener('click', addTask);
+
+  buttonEl.addEventListener('click', () => addTask());
+
   inputEl.addEventListener('keydown', e => {
-    if (e.ctrlKey && e.key === 'Enter') addTask();
+    if (!e.ctrlKey) return;
+
+    if (listName === 'todos' && ['1', '2', '3'].includes(e.key)) {
+      shortcutNum = e.key;
+      return;
+    }
+
+    if (e.key === 'Enter') {
+      const sectionMap = { '1': 'mustone', '2': 'medium', '3': 'small' };
+      const target = sectionMap[shortcutNum] || 'other';
+      addTask(target);
+      shortcutNum = null;
+    }
+  });
+
+  inputEl.addEventListener('keyup', e => {
+    if (!e.ctrlKey) shortcutNum = null;
   });
 }
 
