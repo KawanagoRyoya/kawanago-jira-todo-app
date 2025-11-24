@@ -180,7 +180,6 @@ function renderTodoSections() {
       li.classList.toggle('completed', cb.checked);
       
       await window.electronAPI.store.set('todos', todos);
-      // ❌ renderView() しない
     });
 
     // SVGアイコン
