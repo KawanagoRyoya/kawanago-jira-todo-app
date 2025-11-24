@@ -169,6 +169,128 @@ body, div, input, button, select, textarea {
   display: flex;
   align-items: center;
   gap: 8px;
+  position: relative;
+  padding-left: 40px;
+}
+
+/* チェックボックスのカスタムスタイル */
+.section-list li input[type="checkbox"],
+#backlog-list li input[type="checkbox"] {
+  position: absolute;
+  top: 50%;
+  left: 8px;
+  transform: translateY(-50%);
+  width: 24px;
+  height: 24px;
+  opacity: 0;
+  cursor: pointer;
+  z-index: 2;
+}
+
+/* SVGアイコンのスタイル */
+.todo__icon {
+  position: absolute;
+  top: 50%;
+  left: 8px;
+  transform: translateY(-50%);
+  width: 200px;
+  height: 25px;
+  fill: none;
+  stroke: #5B9BD5;
+  stroke-width: 2;
+  stroke-linejoin: round;
+  stroke-linecap: round;
+  pointer-events: none;
+  z-index: 1;
+}
+
+.todo__line,
+.todo__box,
+.todo__check {
+  transition: stroke-dashoffset 0.64s cubic-bezier(.9,.0,.5,1);
+}
+
+.todo__circle {
+  stroke: #5B9BD5;
+  stroke-dasharray: 1 6;
+  stroke-width: 0;
+  transform-origin: 13.5px 12.5px;
+  transform: scale(0.4) rotate(0deg);
+  animation: none 0.64s linear;
+}
+
+@keyframes explode {
+  30% { 
+    stroke-width: 3;
+    stroke-opacity: 1;
+    transform: scale(0.8) rotate(40deg);
+  }
+  100% { 
+    stroke-width: 0;
+    stroke-opacity: 0;
+    transform: scale(1.1) rotate(60deg);
+  }
+}
+
+.todo__box { 
+  stroke-dasharray: 56.1053, 56.1053;
+  stroke-dashoffset: 0;
+  transition-delay: 0.128s;
+}
+
+.todo__check {
+  stroke: #5B9BD5;
+  stroke-dasharray: 9.8995, 9.8995;
+  stroke-dashoffset: 9.8995;
+  transition-duration: 0.256s;
+}
+
+.todo__line {
+  stroke-dasharray: 168, 1684;
+  stroke-dashoffset: 168;
+}
+
+.todo__circle { 
+  animation-delay: 0.448s;
+  animation-duration: 0.448s;
+}
+
+/* チェック状態のスタイル - classベースで制御 */
+li.completed .todo__box {
+  stroke-dashoffset: 56.1053;
+  transition-delay: 0s;
+}
+
+li.completed .todo__line {
+  stroke-dashoffset: -8;
+}
+
+li.completed .todo__check {
+  stroke-dashoffset: 0;
+  transition-delay: 0.384s;
+}
+
+li.completed .todo__circle {
+  animation-name: explode;
+}
+
+li.completed span {
+  color: #7BA7D6;
+  opacity: 0.6;
+  text-decoration: line-through;
+  text-decoration-color: #7BA7D6;
+  text-decoration-thickness: 2px;
+}
+
+/* タスクテキストのスタイル */
+.section-list li span,
+#backlog-list li span {
+  color: #2C5F8D;
+  transition: all 0.24s ease;
+  flex: 1;
+  text-decoration: none;
+  word-wrap: break-word;
+  overflow-wrap: break-word;
 }
 
 /* 右端へ押し出し */

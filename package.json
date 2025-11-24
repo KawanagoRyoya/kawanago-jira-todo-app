@@ -7,7 +7,7 @@
   },
   "dependencies": {
     "axios": "^1.4.0",
-    "dotenv": "^16.0.0",
+    "dotenv": "^16.6.1",
     "electron-store": "^8.1.0",
     "https-proxy-agent": "^7.0.6"
   },

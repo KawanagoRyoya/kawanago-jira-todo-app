@@ -163,6 +163,11 @@ function renderTodoSections() {
   todos.forEach((item, idx) => {
     const li = document.createElement('li');
     li.dataset.todoIndex = idx;
+    
+    // 完了状態の場合はclassを追加
+    if (item.status === 'Done') {
+      li.classList.add('completed');
+    }
 
     // 完了チェック
     const cb = document.createElement('input');
@@ -170,14 +175,27 @@ function renderTodoSections() {
     cb.checked = item.status === 'Done';
     cb.addEventListener('change', async () => {
       item.status = cb.checked ? 'Done' : 'ToDo';
+      
+      // DOMを消さずにliに状態クラスだけ付ける
+      li.classList.toggle('completed', cb.checked);
+      
       await window.electronAPI.store.set('todos', todos);
-      renderView();
     });
+
+    // SVGアイコン
+    const svg = document.createElementNS('http://www.w3.org/2000/svg', 'svg');
+    svg.setAttribute('viewBox', '0 0 200 25');
+    svg.setAttribute('class', 'todo__icon');
+    svg.innerHTML = `
+      <path class="todo__line"  d="M21 12.3h168v0.1z"></path>
+      <path class="todo__box"   d="M21 12.7v5c0 1.3-1 2.3-2.3 2.3H8.3C7 20 6 19 6 17.7V7.3C6 6 7 5 8.3 5h10.4C20 5 21 6 21 7.3v5.4"></path>
+      <path class="todo__check" d="M10 13l2 2 5-5"></path>
+      <circle class="todo__circle" cx="13.5" cy="12.5" r="10"></circle>
+    `;
 
     // 編集（ダブルクリック）
     const lbl = document.createElement('span');
     lbl.textContent = item.description;
-    if (item.status === 'Done') lbl.style.textDecoration = 'line-through';
     lbl.addEventListener('dblclick', () => {
       const inp = document.createElement('input');
       inp.type  = 'text';
@@ -207,7 +225,7 @@ function renderTodoSections() {
     moveBtn.textContent = '📥';
     moveBtn.addEventListener('click', () => moveTodoToBacklog(idx));
 
-    li.append(cb, lbl, moveBtn);
+    li.append(cb, svg, lbl, moveBtn);
     li.draggable = true;
     li.addEventListener('dragstart', e => {
       e.dataTransfer.setData('text/plain', idx);
@@ -227,19 +245,38 @@ function renderBacklogList() {
   ul.innerHTML = '';
   backlog.forEach((item, idx) => {
     const li = document.createElement('li');
+    
+    // 完了状態の場合はclassを追加
+    if (item.status === 'Done') {
+      li.classList.add('completed');
+    }
 
     const cb = document.createElement('input');
     cb.type    = 'checkbox';
     cb.checked = item.status === 'Done';
     cb.addEventListener('change', async () => {
       item.status = cb.checked ? 'Done' : 'Backlog';
+      
+      // DOMを消さずにliに状態クラスだけ付ける
+      li.classList.toggle('completed', cb.checked);
+      
       await window.electronAPI.store.set('backlog', backlog);
-      renderView();
+      
     });
+
+    // SVGアイコン
+    const svg = document.createElementNS('http://www.w3.org/2000/svg', 'svg');
+    svg.setAttribute('viewBox', '0 0 200 25');
+    svg.setAttribute('class', 'todo__icon');
+    svg.innerHTML = `
+      <path class="todo__line"  d="M21 12.3h168v0.1z"></path>
+      <path class="todo__box"   d="M21 12.7v5c0 1.3-1 2.3-2.3 2.3H8.3C7 20 6 19 6 17.7V7.3C6 6 7 5 8.3 5h10.4C20 5 21 6 21 7.3v5.4"></path>
+      <path class="todo__check" d="M10 13l2 2 5-5"></path>
+      <circle class="todo__circle" cx="13.5" cy="12.5" r="10"></circle>
+    `;
 
     const lbl = document.createElement('span');
     lbl.textContent = item.description;
-    if (item.status === 'Done') lbl.style.textDecoration = 'line-through';
     lbl.addEventListener('dblclick', () => {
       const inp = document.createElement('input');
       inp.type  = 'text';
@@ -269,7 +306,7 @@ function renderBacklogList() {
     moveBtn.textContent = '📤';
     moveBtn.addEventListener('click', () => moveBacklogToTodo(idx));
 
-    li.append(cb, lbl, moveBtn);
+    li.append(cb, svg, lbl, moveBtn);
     ul.appendChild(li);
   });
 }
