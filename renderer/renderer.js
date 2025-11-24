@@ -261,7 +261,7 @@ function renderBacklogList() {
       li.classList.toggle('completed', cb.checked);
       
       await window.electronAPI.store.set('backlog', backlog);
-      // ❌ renderView() しない
+      
     });
 
     // SVGアイコン
