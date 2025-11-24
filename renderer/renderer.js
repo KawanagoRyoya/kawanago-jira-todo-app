@@ -176,7 +176,7 @@ function renderTodoSections() {
     cb.addEventListener('change', async () => {
       item.status = cb.checked ? 'Done' : 'ToDo';
       
-      // ✅ DOMを消さずにliに状態クラスだけ付ける
+      // DOMを消さずにliに状態クラスだけ付ける
       li.classList.toggle('completed', cb.checked);
       
       await window.electronAPI.store.set('todos', todos);
