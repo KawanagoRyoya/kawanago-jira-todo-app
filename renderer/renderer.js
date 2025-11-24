@@ -257,7 +257,7 @@ function renderBacklogList() {
     cb.addEventListener('change', async () => {
       item.status = cb.checked ? 'Done' : 'Backlog';
       
-      // ✅ DOMを消さずにliに状態クラスだけ付ける
+      // DOMを消さずにliに状態クラスだけ付ける
       li.classList.toggle('completed', cb.checked);
       
       await window.electronAPI.store.set('backlog', backlog);
