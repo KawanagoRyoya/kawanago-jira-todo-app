@@ -110,7 +110,6 @@ kawanago-jira-todo-app/
   - Sprint ID入力ボタンをもう一度クリックすると隠れる
   - タスクの入力箇所の横幅調節
   - Notificationの表示改善
-  - チェックボックスのCSSアップデート
 - Jira連携機能
   - BacklogからEpicを作成することができる
   - BacklogからTaskを作成することができる
