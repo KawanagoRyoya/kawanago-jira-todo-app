@@ -256,8 +256,11 @@ function renderTodoSections() {
     
     li.addEventListener('dragleave', e => {
       e.preventDefault();
-      li.style.borderTop = '';
-      li.style.borderBottom = '';
+      // Only clear borders if mouse has actually left the li and its children
+      if (!e.currentTarget.contains(e.relatedTarget)) {
+        li.style.borderTop = '';
+        li.style.borderBottom = '';
+      }
     });
     
     li.addEventListener('drop', e => {
