@@ -447,7 +447,10 @@ async function handleDropEvent(e, sectionKey) {
   // セクションを更新
   item.section = sectionKey;
   
-  // セクションの最後に追加（削除後のインデックスを調整）
+  // セクションの最後に追加
+  // srcIdx での削除後、lastIdx の位置が変わる場合があるため調整が必要
+  // lastIdx >= srcIdx の場合：削除により lastIdx の項目が左にシフトするため、insertIdx = lastIdx
+  // lastIdx < srcIdx の場合：lastIdx の位置は変わらないため、insertIdx = lastIdx + 1
   const insertIdx = lastIdx >= 0 ? (lastIdx >= srcIdx ? lastIdx : lastIdx + 1) : todos.length;
   
   todos.splice(insertIdx, 0, item);
