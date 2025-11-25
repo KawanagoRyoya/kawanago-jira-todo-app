@@ -449,9 +449,17 @@ async function handleDropEvent(e, sectionKey) {
   
   // セクションの最後に追加
   // srcIdx での削除後、lastIdx の位置が変わる場合があるため調整が必要
-  // lastIdx >= srcIdx の場合：削除により lastIdx の項目が左にシフトするため、insertIdx = lastIdx
-  // lastIdx < srcIdx の場合：lastIdx の位置は変わらないため、insertIdx = lastIdx + 1
-  const insertIdx = lastIdx >= 0 ? (lastIdx >= srcIdx ? lastIdx : lastIdx + 1) : todos.length;
+  let insertIdx;
+  if (lastIdx < 0) {
+    // セクションが空の場合は配列の最後に追加
+    insertIdx = todos.length;
+  } else if (lastIdx >= srcIdx) {
+    // 削除により lastIdx の項目が左にシフトするため、insertIdx = lastIdx
+    insertIdx = lastIdx;
+  } else {
+    // lastIdx の位置は変わらないため、insertIdx = lastIdx + 1
+    insertIdx = lastIdx + 1;
+  }
   
   todos.splice(insertIdx, 0, item);
   
