@@ -124,5 +124,3 @@ kawanago-jira-todo-app/
   - マストワンタスクのLabelをつけることができる
   - PJ名/Epic名のLabelをつけることができる ※優先度Low
 - 状態管理ライブラリの導入（Redux/Context）
-  - 微改善
-    - ショートカットキーの充実
