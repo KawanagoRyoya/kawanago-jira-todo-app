@@ -176,6 +176,7 @@ function setupAddTask(inputId, buttonId, listName) {
   // キーボードショートカット
   let waitingForEnter = false; // 数字キー後のEnter待機状態
   let pendingSection = null;   // 保留中のセクション
+  const SHORTCUT_TIMEOUT_MS = 2000; // ショートカット入力のタイムアウト時間(ミリ秒)
   
   // タイムアウト処理のヘルパー関数
   function clearPendingAfterTimeout(expectedSection) {
@@ -184,7 +185,7 @@ function setupAddTask(inputId, buttonId, listName) {
         waitingForEnter = false;
         pendingSection = null;
       }
-    }, 2000);
+    }, SHORTCUT_TIMEOUT_MS);
   }
   
   inputEl.addEventListener('keydown', async e => {
