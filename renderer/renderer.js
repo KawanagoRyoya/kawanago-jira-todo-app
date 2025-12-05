@@ -177,6 +177,16 @@ function setupAddTask(inputId, buttonId, listName) {
   let waitingForEnter = false; // 数字キー後のEnter待機状態
   let pendingSection = null;   // 保留中のセクション
   
+  // タイムアウト処理のヘルパー関数
+  function clearPendingAfterTimeout(expectedSection) {
+    setTimeout(() => {
+      if (pendingSection === expectedSection) {
+        waitingForEnter = false;
+        pendingSection = null;
+      }
+    }, 2000);
+  }
+  
   inputEl.addEventListener('keydown', async e => {
     // Ctrl+数字の後のEnter処理
     if (waitingForEnter && e.key === 'Enter') {
@@ -219,13 +229,7 @@ function setupAddTask(inputId, buttonId, listName) {
         e.preventDefault();
         waitingForEnter = true;
         pendingSection = 'mustone';
-        // 2秒後にタイムアウト
-        setTimeout(() => {
-          if (pendingSection === 'mustone') {
-            waitingForEnter = false;
-            pendingSection = null;
-          }
-        }, 2000);
+        clearPendingAfterTimeout('mustone');
         return;
       }
       // Ctrl+2: Mediumセクションへの追加を予約
@@ -233,12 +237,7 @@ function setupAddTask(inputId, buttonId, listName) {
         e.preventDefault();
         waitingForEnter = true;
         pendingSection = 'medium';
-        setTimeout(() => {
-          if (pendingSection === 'medium') {
-            waitingForEnter = false;
-            pendingSection = null;
-          }
-        }, 2000);
+        clearPendingAfterTimeout('medium');
         return;
       }
       // Ctrl+3: Smallセクションへの追加を予約
@@ -246,12 +245,7 @@ function setupAddTask(inputId, buttonId, listName) {
         e.preventDefault();
         waitingForEnter = true;
         pendingSection = 'small';
-        setTimeout(() => {
-          if (pendingSection === 'small') {
-            waitingForEnter = false;
-            pendingSection = null;
-          }
-        }, 2000);
+        clearPendingAfterTimeout('small');
         return;
       }
     }
