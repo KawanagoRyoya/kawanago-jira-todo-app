@@ -128,6 +128,14 @@ function setupAddTask(inputId, buttonId, listName) {
   const inputEl  = document.getElementById(inputId);
   const buttonEl = document.getElementById(buttonId);
   
+  // セクション名のマッピング
+  const sectionNames = {
+    mustone: 'MustOne',
+    medium: 'Medium',
+    small: 'Small',
+    other: 'Other'
+  };
+  
   // 特定のセクションにタスクを追加する関数
   async function addTaskToSection(targetSection) {
     const desc = inputEl.value.trim();
@@ -137,11 +145,6 @@ function setupAddTask(inputId, buttonId, listName) {
     if (targetSection && targetSection !== 'other') {
       const currentCount = todos.filter(t => t.section === targetSection).length;
       if (currentCount >= sectionLimit[targetSection]) {
-        const sectionNames = {
-          mustone: 'MustOne',
-          medium: 'Medium',
-          small: 'Small'
-        };
         showNotification(`${sectionNames[targetSection]}セクションの上限を超えています`);
         return;
       }
@@ -157,7 +160,7 @@ function setupAddTask(inputId, buttonId, listName) {
     if (listName === 'todos') {
       todos.push(item);
       await window.electronAPI.store.set('todos', todos);
-      showNotification(`タスクを${targetSection === 'mustone' ? 'MustOne' : targetSection === 'medium' ? 'Medium' : targetSection === 'small' ? 'Small' : 'Other'}に追加しました`);
+      showNotification(`タスクを${sectionNames[targetSection] || 'Other'}に追加しました`);
     } else {
       backlog.push(item);
       await window.electronAPI.store.set('backlog', backlog);
