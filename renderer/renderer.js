@@ -176,7 +176,7 @@ function setupAddTask(inputId, buttonId, listName) {
   
   buttonEl.addEventListener('click', addTask);
   
-  // キーボードショートカット
+  // キーボードショートカット用の状態（各入力フィールドごとに独立）
   let waitingForEnter = false; // 数字キー後のEnter待機状態
   let pendingSection = null;   // 保留中のセクション
   const SHORTCUT_TIMEOUT_MS = 2000; // ショートカット入力のタイムアウト時間(ミリ秒)
