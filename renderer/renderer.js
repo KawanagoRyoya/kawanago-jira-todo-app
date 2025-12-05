@@ -127,18 +127,40 @@ document.getElementById('btn-report-end').addEventListener('click', async () => 
 function setupAddTask(inputId, buttonId, listName) {
   const inputEl  = document.getElementById(inputId);
   const buttonEl = document.getElementById(buttonId);
-  async function addTask() {
+  
+  // セクション名のマッピング
+  const sectionNames = {
+    mustone: 'MustOne',
+    medium: 'Medium',
+    small: 'Small',
+    other: 'Other'
+  };
+  
+  // 特定のセクションにタスクを追加する関数
+  async function addTaskToSection(targetSection) {
     const desc = inputEl.value.trim();
     if (!desc) return;
+    
+    // セクションの上限チェック
+    if (targetSection && targetSection !== 'other') {
+      const currentCount = todos.filter(t => t.section === targetSection).length;
+      if (currentCount >= sectionLimit[targetSection]) {
+        showNotification(`${sectionNames[targetSection]}セクションの上限を超えています`);
+        return;
+      }
+    }
+    
     const item = {
       description: desc,
       dueDate:     null,
       status:      'ToDo',
-      section:     listName === 'todos' ? 'other' : undefined
+      section:     listName === 'todos' ? (targetSection || 'other') : undefined
     };
+    
     if (listName === 'todos') {
       todos.push(item);
       await window.electronAPI.store.set('todos', todos);
+      showNotification(`タスクを${sectionNames[targetSection] || 'Other'}に追加しました`);
     } else {
       backlog.push(item);
       await window.electronAPI.store.set('backlog', backlog);
@@ -146,9 +168,75 @@ function setupAddTask(inputId, buttonId, listName) {
     inputEl.value = '';
     renderView();
   }
+  
+  // デフォルトのタスク追加（Otherセクション）
+  async function addTask() {
+    await addTaskToSection('other');
+  }
+  
   buttonEl.addEventListener('click', addTask);
-  inputEl.addEventListener('keydown', e => {
-    if (e.ctrlKey && e.key === 'Enter') addTask();
+  
+  // キーボードショートカット用の状態（各入力フィールドごとに独立）
+  let waitingForEnter = false; // 数字キー後のEnter待機状態
+  let pendingSection = null;   // 保留中のセクション
+  const SHORTCUT_TIMEOUT_MS = 2000; // ショートカット入力のタイムアウト時間(ミリ秒)
+  
+  // タイムアウト処理のヘルパー関数
+  function clearPendingAfterTimeout(expectedSection) {
+    setTimeout(() => {
+      if (pendingSection === expectedSection) {
+        waitingForEnter = false;
+        pendingSection = null;
+      }
+    }, SHORTCUT_TIMEOUT_MS);
+  }
+  
+  inputEl.addEventListener('keydown', async e => {
+    // Ctrl+数字の後のEnter処理
+    if (waitingForEnter && e.key === 'Enter') {
+      e.preventDefault();
+      waitingForEnter = false;
+      if (pendingSection) {
+        await addTaskToSection(pendingSection);
+        pendingSection = null;
+      }
+      return;
+    }
+    
+    // Ctrl+Enter: Otherセクションに追加
+    if (e.ctrlKey && e.key === 'Enter' && !e.shiftKey) {
+      e.preventDefault();
+      await addTask();
+      return;
+    }
+    
+    // ToDo画面でのセクション別ショートカット
+    if (listName === 'todos') {
+      // Ctrl+1: MustOneセクションへの追加を予約
+      if (e.ctrlKey && e.key === '1') {
+        e.preventDefault();
+        waitingForEnter = true;
+        pendingSection = 'mustone';
+        clearPendingAfterTimeout('mustone');
+        return;
+      }
+      // Ctrl+2: Mediumセクションへの追加を予約
+      else if (e.ctrlKey && e.key === '2') {
+        e.preventDefault();
+        waitingForEnter = true;
+        pendingSection = 'medium';
+        clearPendingAfterTimeout('medium');
+        return;
+      }
+      // Ctrl+3: Smallセクションへの追加を予約
+      else if (e.ctrlKey && e.key === '3') {
+        e.preventDefault();
+        waitingForEnter = true;
+        pendingSection = 'small';
+        clearPendingAfterTimeout('small');
+        return;
+      }
+    }
   });
 }
 
