@@ -428,8 +428,16 @@ async function handleDropEvent(e, sectionKey) {
   // 同じセクションの場合は何もしない（アイテム間のドロップで処理される）
   if (item.section === sectionKey) return;
   
-  // セクションの上限チェック
-  const count = todos.filter(t => t.section === sectionKey).length;
+  // セクションの上限チェックと最後のアイテムのインデックスを一度に取得
+  let count = 0;
+  let lastIdx = -1;
+  for (let i = 0; i < todos.length; i++) {
+    if (todos[i].section === sectionKey) {
+      count++;
+      lastIdx = i;
+    }
+  }
+  
   if (sectionLimit[sectionKey] < count + 1) {
     showNotification('セクションの上限を超えています');
     return;
@@ -442,9 +450,18 @@ async function handleDropEvent(e, sectionKey) {
   item.section = sectionKey;
   
   // セクションの最後に追加
-  const sectionItems = todos.filter(t => t.section === sectionKey);
-  const lastItemOfSection = sectionItems[sectionItems.length - 1];
-  const insertIdx = lastItemOfSection ? todos.indexOf(lastItemOfSection) + 1 : todos.length;
+  // srcIdx での削除後、lastIdx の位置が変わる場合があるため調整が必要
+  let insertIdx;
+  if (lastIdx < 0) {
+    // セクションが空の場合は配列の最後に追加
+    insertIdx = todos.length;
+  } else if (lastIdx >= srcIdx) {
+    // 削除により lastIdx の項目が左にシフトするため、insertIdx = lastIdx
+    insertIdx = lastIdx;
+  } else {
+    // lastIdx の位置は変わらないため、insertIdx = lastIdx + 1
+    insertIdx = lastIdx + 1;
+  }
   
   todos.splice(insertIdx, 0, item);
   
