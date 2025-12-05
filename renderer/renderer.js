@@ -3,6 +3,7 @@
 let todos = [];
 let backlog = [];
 let currentView = 'todo';
+let draggingElement = null;
 
 const sectionLimit = {
   mustone: 1,
@@ -230,17 +231,18 @@ function renderTodoSections() {
     li.addEventListener('dragstart', e => {
       e.dataTransfer.setData('text/plain', idx);
       li.classList.add('dragging');
+      draggingElement = li;
     });
     li.addEventListener('dragend', () => {
       li.classList.remove('dragging');
+      draggingElement = null;
     });
     
     // li自体にドラッグオーバーとドロップを設定
     li.addEventListener('dragover', e => {
       e.preventDefault();
       e.stopPropagation();
-      const draggingEl = document.querySelector('.dragging');
-      if (!draggingEl || draggingEl === li) return;
+      if (!draggingElement || draggingElement === li) return;
       
       // ドロップ位置を視覚的に表示
       const rect = li.getBoundingClientRect();
