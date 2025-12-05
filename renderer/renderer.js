@@ -203,26 +203,10 @@ function setupAddTask(inputId, buttonId, listName) {
       return;
     }
     
-    // Ctrl+Enter: Otherセクションに追加（ToDo画面のみ）
+    // Ctrl+Enter: Otherセクションに追加
     if (e.ctrlKey && e.key === 'Enter' && !e.shiftKey) {
       e.preventDefault();
-      if (listName === 'todos') {
-        await addTask();
-      } else {
-        // Backlog画面での処理
-        const desc = inputEl.value.trim();
-        if (!desc) return;
-        const item = {
-          description: desc,
-          dueDate:     null,
-          status:      'ToDo',
-          section:     undefined
-        };
-        backlog.push(item);
-        await window.electronAPI.store.set('backlog', backlog);
-        inputEl.value = '';
-        renderView();
-      }
+      await addTask();
       return;
     }
     
