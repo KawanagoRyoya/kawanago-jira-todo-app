@@ -3,6 +3,7 @@
 let todos = [];
 let backlog = [];
 let currentView = 'todo';
+let draggingElement = null;
 
 const sectionLimit = {
   mustone: 1,
@@ -230,9 +231,50 @@ function renderTodoSections() {
     li.addEventListener('dragstart', e => {
       e.dataTransfer.setData('text/plain', idx);
       li.classList.add('dragging');
+      draggingElement = li;
     });
     li.addEventListener('dragend', () => {
       li.classList.remove('dragging');
+      draggingElement = null;
+    });
+    
+    // li自体にドラッグオーバーとドロップを設定
+    li.addEventListener('dragover', e => {
+      e.preventDefault();
+      e.stopPropagation();
+      if (!draggingElement || draggingElement === li) return;
+      
+      // ドロップ位置を視覚的に表示
+      const rect = li.getBoundingClientRect();
+      const midY = rect.top + rect.height / 2;
+      if (e.clientY < midY) {
+        li.style.borderTop = '2px solid #5B9BD5';
+        li.style.borderBottom = '';
+      } else {
+        li.style.borderTop = '';
+        li.style.borderBottom = '2px solid #5B9BD5';
+      }
+    });
+    
+    li.addEventListener('dragleave', e => {
+      e.preventDefault();
+      // Only clear borders if mouse has actually left the li and its children
+      if (!e.currentTarget.contains(e.relatedTarget)) {
+        li.style.borderTop = '';
+        li.style.borderBottom = '';
+      }
+    });
+    
+    li.addEventListener('drop', e => {
+      e.preventDefault();
+      e.stopPropagation();
+      li.style.borderTop = '';
+      li.style.borderBottom = '';
+      
+      const srcIdx = parseInt(e.dataTransfer.getData('text/plain'), 10);
+      if (isNaN(srcIdx) || srcIdx === idx) return;
+      
+      handleDropOnItem(e, srcIdx, idx, item.section);
     });
 
     sectionsEls[item.section].appendChild(li);
@@ -337,20 +379,92 @@ async function moveBacklogToTodo(backlogIndex) {
   renderView();
 }
 
-// ── ドロップ処理を一度だけ登録 ──
+// ── ドロップ処理（アイテム上） ──
+async function handleDropOnItem(e, srcIdx, targetIdx, targetSection) {
+  const item = todos[srcIdx];
+  const targetItem = todos[targetIdx];
+  
+  // セクションの上限チェック
+  if (item.section !== targetSection) {
+    const count = todos.filter(t => t.section === targetSection).length;
+    if (sectionLimit[targetSection] < count + 1) {
+      showNotification('セクションの上限を超えています');
+      return;
+    }
+  }
+  
+  // ドロップ位置を決定（上半分か下半分か）
+  const rect = e.target.closest('li').getBoundingClientRect();
+  const midY = rect.top + rect.height / 2;
+  const insertBefore = e.clientY < midY;
+  
+  // ソースアイテムを削除
+  todos.splice(srcIdx, 1);
+  
+  // ターゲットインデックスを再計算（削除後）
+  let newTargetIdx = todos.findIndex(t => t === targetItem);
+  
+  // 挿入位置を決定
+  const insertIdx = insertBefore ? newTargetIdx : newTargetIdx + 1;
+  
+  // セクションを更新
+  item.section = targetSection;
+  
+  // 指定位置に挿入
+  todos.splice(insertIdx, 0, item);
+  
+  await window.electronAPI.store.set('todos', todos);
+  renderView();
+}
+
+// ── ドロップ処理（空のセクション用） ──
 async function handleDropEvent(e, sectionKey) {
   e.preventDefault();
   const srcIdx = parseInt(e.dataTransfer.getData('text/plain'), 10);
   if (isNaN(srcIdx)) return;
+  
   const item = todos[srcIdx];
-  const count = todos.filter(t => t.section === sectionKey).length;
-  if (sectionLimit[sectionKey] < count + (item.section !== sectionKey ? 1 : 0)) {
+  
+  // 同じセクションの場合は何もしない（アイテム間のドロップで処理される）
+  if (item.section === sectionKey) return;
+  
+  // セクションの上限チェックと最後のアイテムのインデックスを一度に取得
+  let count = 0;
+  let lastIdx = -1;
+  for (let i = 0; i < todos.length; i++) {
+    if (todos[i].section === sectionKey) {
+      count++;
+      lastIdx = i;
+    }
+  }
+  
+  if (sectionLimit[sectionKey] < count + 1) {
     showNotification('セクションの上限を超えています');
     return;
   }
+  
+  // ソースアイテムを削除
   todos.splice(srcIdx, 1);
+  
+  // セクションを更新
   item.section = sectionKey;
-  todos.push(item);
+  
+  // セクションの最後に追加
+  // srcIdx での削除後、lastIdx の位置が変わる場合があるため調整が必要
+  let insertIdx;
+  if (lastIdx < 0) {
+    // セクションが空の場合は配列の最後に追加
+    insertIdx = todos.length;
+  } else if (lastIdx >= srcIdx) {
+    // 削除により lastIdx の項目が左にシフトするため、insertIdx = lastIdx
+    insertIdx = lastIdx;
+  } else {
+    // lastIdx の位置は変わらないため、insertIdx = lastIdx + 1
+    insertIdx = lastIdx + 1;
+  }
+  
+  todos.splice(insertIdx, 0, item);
+  
   await window.electronAPI.store.set('todos', todos);
   renderView();
 }
