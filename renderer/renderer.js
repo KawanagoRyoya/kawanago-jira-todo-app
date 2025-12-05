@@ -127,18 +127,37 @@ document.getElementById('btn-report-end').addEventListener('click', async () => 
 function setupAddTask(inputId, buttonId, listName) {
   const inputEl  = document.getElementById(inputId);
   const buttonEl = document.getElementById(buttonId);
-  async function addTask() {
+  
+  // 特定のセクションにタスクを追加する関数
+  async function addTaskToSection(targetSection) {
     const desc = inputEl.value.trim();
     if (!desc) return;
+    
+    // セクションの上限チェック
+    if (targetSection && targetSection !== 'other') {
+      const currentCount = todos.filter(t => t.section === targetSection).length;
+      if (currentCount >= sectionLimit[targetSection]) {
+        const sectionNames = {
+          mustone: 'MustOne',
+          medium: 'Medium',
+          small: 'Small'
+        };
+        showNotification(`${sectionNames[targetSection]}セクションの上限を超えています`);
+        return;
+      }
+    }
+    
     const item = {
       description: desc,
       dueDate:     null,
       status:      'ToDo',
-      section:     listName === 'todos' ? 'other' : undefined
+      section:     listName === 'todos' ? (targetSection || 'other') : undefined
     };
+    
     if (listName === 'todos') {
       todos.push(item);
       await window.electronAPI.store.set('todos', todos);
+      showNotification(`タスクを${targetSection === 'mustone' ? 'MustOne' : targetSection === 'medium' ? 'Medium' : targetSection === 'small' ? 'Small' : 'Other'}に追加しました`);
     } else {
       backlog.push(item);
       await window.electronAPI.store.set('backlog', backlog);
@@ -146,9 +165,96 @@ function setupAddTask(inputId, buttonId, listName) {
     inputEl.value = '';
     renderView();
   }
+  
+  // デフォルトのタスク追加（Otherセクション）
+  async function addTask() {
+    await addTaskToSection('other');
+  }
+  
   buttonEl.addEventListener('click', addTask);
-  inputEl.addEventListener('keydown', e => {
-    if (e.ctrlKey && e.key === 'Enter') addTask();
+  
+  // キーボードショートカット
+  let waitingForEnter = false; // 数字キー後のEnter待機状態
+  let pendingSection = null;   // 保留中のセクション
+  
+  inputEl.addEventListener('keydown', async e => {
+    // Ctrl+数字の後のEnter処理
+    if (waitingForEnter && e.key === 'Enter') {
+      e.preventDefault();
+      waitingForEnter = false;
+      if (pendingSection) {
+        await addTaskToSection(pendingSection);
+        pendingSection = null;
+      }
+      return;
+    }
+    
+    // Ctrl+Enter: Otherセクションに追加（ToDo画面のみ）
+    if (e.ctrlKey && e.key === 'Enter' && !e.shiftKey) {
+      e.preventDefault();
+      if (listName === 'todos') {
+        await addTask();
+      } else {
+        // Backlog画面での処理
+        const desc = inputEl.value.trim();
+        if (!desc) return;
+        const item = {
+          description: desc,
+          dueDate:     null,
+          status:      'ToDo',
+          section:     undefined
+        };
+        backlog.push(item);
+        await window.electronAPI.store.set('backlog', backlog);
+        inputEl.value = '';
+        renderView();
+      }
+      return;
+    }
+    
+    // ToDo画面でのセクション別ショートカット
+    if (listName === 'todos') {
+      // Ctrl+1: MustOneセクションへの追加を予約
+      if (e.ctrlKey && e.key === '1') {
+        e.preventDefault();
+        waitingForEnter = true;
+        pendingSection = 'mustone';
+        // 2秒後にタイムアウト
+        setTimeout(() => {
+          if (pendingSection === 'mustone') {
+            waitingForEnter = false;
+            pendingSection = null;
+          }
+        }, 2000);
+        return;
+      }
+      // Ctrl+2: Mediumセクションへの追加を予約
+      else if (e.ctrlKey && e.key === '2') {
+        e.preventDefault();
+        waitingForEnter = true;
+        pendingSection = 'medium';
+        setTimeout(() => {
+          if (pendingSection === 'medium') {
+            waitingForEnter = false;
+            pendingSection = null;
+          }
+        }, 2000);
+        return;
+      }
+      // Ctrl+3: Smallセクションへの追加を予約
+      else if (e.ctrlKey && e.key === '3') {
+        e.preventDefault();
+        waitingForEnter = true;
+        pendingSection = 'small';
+        setTimeout(() => {
+          if (pendingSection === 'small') {
+            waitingForEnter = false;
+            pendingSection = null;
+          }
+        }, 2000);
+        return;
+      }
+    }
   });
 }
 
