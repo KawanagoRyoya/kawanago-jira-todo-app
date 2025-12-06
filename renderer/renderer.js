@@ -14,6 +14,7 @@ const sectionLimit = {
 
 // Toast通知システム
 const MAX_TOASTS = 3;
+const TOAST_AUTO_DISMISS_MS = 3000;
 let toastQueue = [];
 
 function showNotification(msg) {
@@ -50,7 +51,7 @@ function showNotification(msg) {
   setTimeout(() => toast.classList.add('show'), 10);
   
   // 3秒後に自動削除
-  setTimeout(() => removeToast(toast), 3000);
+  setTimeout(() => removeToast(toast), TOAST_AUTO_DISMISS_MS);
 }
 
 function removeToast(toast) {
