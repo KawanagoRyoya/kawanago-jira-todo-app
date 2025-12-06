@@ -35,12 +35,6 @@ body, div, input, button, select, textarea {
   justify-content: space-between;
   position: relative;
 }
-.notification {
-  width: 100%;
-  text-align: center;
-  padding: 8px;
-  color: #0e4cfe;
-}
 .nav-center {
   display: flex;
   gap: 16px;
@@ -300,4 +294,90 @@ li.completed span {
   min-width: auto;
   line-height: 1.1;
   font-size: 1.125rem; 
+}
+
+/* Toast通知システム */
+.toast-container {
+  position: fixed;
+  bottom: 20px;
+  left: 50%;
+  transform: translateX(-50%);
+  z-index: 9999;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  pointer-events: none;
+  max-width: 500px;
+  width: 90%;
+}
+
+.toast {
+  background: #e0e5ec;
+  border-radius: 12px;
+  padding: 16px 20px;
+  box-shadow: 
+    8px 8px 16px #a3b1c6,
+    -8px -8px 16px #ffffff,
+    inset 2px 2px 4px rgba(139, 189, 232, 0.3),
+    inset -2px -2px 4px rgba(255, 255, 255, 0.5);
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  opacity: 0;
+  transform: translateY(20px);
+  transition: all 0.3s ease;
+  pointer-events: all;
+  border-left: 4px solid #7BA7D6;
+}
+
+.toast.show {
+  opacity: 1;
+  transform: translateY(0);
+}
+
+.toast.removing {
+  opacity: 0;
+  transform: translateY(10px) scale(0.95);
+  transition: all 0.5s ease;
+}
+
+.toast-message {
+  flex: 1;
+  color: #2C5F8D;
+  font-size: 14px;
+  line-height: 1.4;
+  word-break: break-word;
+}
+
+.toast-close {
+  background: #e0e5ec;
+  border: none;
+  border-radius: 50%;
+  width: 28px;
+  height: 28px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  font-size: 20px;
+  color: #5B9BD5;
+  box-shadow: 
+    4px 4px 8px #a3b1c6,
+    -4px -4px 8px #ffffff;
+  transition: all 0.2s ease;
+  flex-shrink: 0;
+}
+
+.toast-close:hover {
+  box-shadow: 
+    inset 2px 2px 4px #a3b1c6,
+    inset -2px -2px 4px #ffffff;
+  color: #7BA7D6;
+}
+
+.toast-close:active {
+  box-shadow: 
+    inset 3px 3px 6px #a3b1c6,
+    inset -3px -3px 6px #ffffff;
+  transform: scale(0.95);
 }
