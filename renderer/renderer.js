@@ -49,12 +49,18 @@ function showNotification(msg) {
   // アニメーションで表示
   setTimeout(() => toast.classList.add('show'), 10);
   
-  // 3秒後に自動削除
-  setTimeout(() => removeToast(toast), 3000);
+  // 3秒後に自動削除（タイムアウトIDを保存）
+  toast.autoDismissTimeout = setTimeout(() => removeToast(toast), 3000);
 }
 
 function removeToast(toast) {
   if (!toast || !toast.parentElement) return;
+  
+  // 自動削除タイムアウトをクリア
+  if (toast.autoDismissTimeout) {
+    clearTimeout(toast.autoDismissTimeout);
+    toast.autoDismissTimeout = null;
+  }
   
   // フェードアウトアニメーション
   toast.classList.add('removing');
