@@ -15,6 +15,7 @@ const sectionLimit = {
 // Toast通知システム
 const MAX_TOASTS = 3;
 let toastQueue = [];
+const toastTimeouts = new WeakMap();
 
 function showNotification(msg) {
   const container = document.getElementById('toast-container');
@@ -50,16 +51,18 @@ function showNotification(msg) {
   setTimeout(() => toast.classList.add('show'), 10);
   
   // 3秒後に自動削除（タイムアウトIDを保存）
-  toast.autoDismissTimeout = setTimeout(() => removeToast(toast), 3000);
+  const timeoutId = setTimeout(() => removeToast(toast), 3000);
+  toastTimeouts.set(toast, timeoutId);
 }
 
 function removeToast(toast) {
   if (!toast || !toast.parentElement) return;
   
   // 自動削除タイムアウトをクリア
-  if (toast.autoDismissTimeout) {
-    clearTimeout(toast.autoDismissTimeout);
-    toast.autoDismissTimeout = null;
+  const timeoutId = toastTimeouts.get(toast);
+  if (timeoutId) {
+    clearTimeout(timeoutId);
+    toastTimeouts.delete(toast);
   }
   
   // フェードアウトアニメーション
