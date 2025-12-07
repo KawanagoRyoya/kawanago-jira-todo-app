@@ -15,6 +15,7 @@ const sectionLimit = {
 // Toast通知システム
 const MAX_TOASTS = 3;
 const TOAST_AUTO_DISMISS_MS = 3000;
+const TOAST_ANIMATION_DURATION_MS = 500; // 500ms matches the 0.5s transition duration in .toast.removing CSS class
 let toastQueue = [];
 
 function showNotification(msg) {
@@ -70,7 +71,7 @@ function removeToast(toast) {
     if (index > -1) {
       toastQueue.splice(index, 1);
     }
-  }, 500); // CSSのtransition時間と同じ
+  }, TOAST_ANIMATION_DURATION_MS); // CSSのtransition時間と同じ
 }
 
 // ナビボタンのアクティブ切替
