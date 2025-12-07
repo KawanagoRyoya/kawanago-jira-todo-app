@@ -17,6 +17,7 @@ const MAX_TOASTS = 3;
 const TOAST_AUTO_DISMISS_MS = 3000;
 const TOAST_ANIMATION_DURATION_MS = 500; // 500ms matches the 0.5s transition duration in .toast.removing CSS class
 let toastQueue = [];
+const toastTimeouts = new WeakMap();
 
 function showNotification(msg) {
   const container = document.getElementById('toast-container');
@@ -51,12 +52,20 @@ function showNotification(msg) {
   // アニメーションで表示
   setTimeout(() => toast.classList.add('show'), 10);
   
-  // 3秒後に自動削除
-  setTimeout(() => removeToast(toast), TOAST_AUTO_DISMISS_MS);
+  // 3秒後に自動削除（タイムアウトIDを保存）
+  const timeoutId = setTimeout(() => removeToast(toast), TOAST_AUTO_DISMISS_MS);
+  toastTimeouts.set(toast, timeoutId);
 }
 
 function removeToast(toast) {
   if (!toast || !toast.parentElement) return;
+  
+  // 自動削除タイムアウトをクリア
+  const timeoutId = toastTimeouts.get(toast);
+  if (timeoutId) {
+    clearTimeout(timeoutId);
+    toastTimeouts.delete(toast);
+  }
   
   // フェードアウトアニメーション
   toast.classList.add('removing');
