@@ -12,14 +12,75 @@ const sectionLimit = {
   other:  Infinity
 };
 
-// 通知表示
-const notification = document.getElementById('notification');
+// Toast通知システム
+const MAX_TOASTS = 3;
+const TOAST_AUTO_DISMISS_MS = 3000;
+const TOAST_ANIMATION_DURATION_MS = 500; // 500ms matches the 0.5s transition duration in .toast.removing CSS class
+let toastQueue = [];
+const toastTimeouts = new WeakMap();
+
 function showNotification(msg) {
-  const notification = document.getElementById('notification');
-  if (!notification) return;       // 要素が無ければ何もしない
-  notification.textContent = msg;
-  notification.style.display = 'block';
-  setTimeout(() => notification.style.display = 'none', 3000);
+  const container = document.getElementById('toast-container');
+  if (!container) return;
+  
+  // 最大数を超えたら一番古いToastを削除
+  if (toastQueue.length >= MAX_TOASTS) {
+    const oldestToast = toastQueue.shift();
+    removeToast(oldestToast);
+  }
+  
+  // Toast要素を作成
+  const toast = document.createElement('div');
+  toast.className = 'toast';
+  
+  const message = document.createElement('span');
+  message.className = 'toast-message';
+  message.textContent = msg;
+  
+  const closeBtn = document.createElement('button');
+  closeBtn.className = 'toast-close';
+  closeBtn.innerHTML = '×';
+  closeBtn.addEventListener('click', () => removeToast(toast));
+  
+  toast.appendChild(message);
+  toast.appendChild(closeBtn);
+  container.appendChild(toast);
+  
+  // キューに追加
+  toastQueue.push(toast);
+  
+  // アニメーションで表示
+  setTimeout(() => toast.classList.add('show'), 10);
+  
+  // 3秒後に自動削除（タイムアウトIDを保存）
+  const timeoutId = setTimeout(() => removeToast(toast), TOAST_AUTO_DISMISS_MS);
+  toastTimeouts.set(toast, timeoutId);
+}
+
+function removeToast(toast) {
+  if (!toast || !toast.parentElement) return;
+  
+  // 自動削除タイムアウトをクリア
+  const timeoutId = toastTimeouts.get(toast);
+  if (timeoutId) {
+    clearTimeout(timeoutId);
+    toastTimeouts.delete(toast);
+  }
+  
+  // フェードアウトアニメーション
+  toast.classList.add('removing');
+  
+  // アニメーション終了後にDOMから削除
+  setTimeout(() => {
+    if (toast.parentElement) {
+      toast.parentElement.removeChild(toast);
+    }
+    // キューから削除
+    const index = toastQueue.indexOf(toast);
+    if (index > -1) {
+      toastQueue.splice(index, 1);
+    }
+  }, TOAST_ANIMATION_DURATION_MS); // CSSのtransition時間と同じ
 }
 
 // ナビボタンのアクティブ切替

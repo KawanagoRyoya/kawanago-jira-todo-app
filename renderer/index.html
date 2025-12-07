@@ -27,8 +27,6 @@
   </svg>
   <div class="app-container">
     <!-- Row1: ナビゲーション -->
-    <!-- 通知領域 -->
-    <div id="notification" class="notification" style="display:none"></div>
     <div class="toolbar">
       <button id="btn-fetch" class="icon-btn nav-btn left-icon"><span class="icon">🗂️</span></button>
       <div class="nav-center">
@@ -87,6 +85,9 @@
       <button id="btn-report-end" class="btn">Finish Work</button>
     </div>
   </div>
+
+  <!-- Toast通知コンテナ -->
+  <div id="toast-container" class="toast-container"></div>
 
   <script src="renderer.js"></script>
 </body>
