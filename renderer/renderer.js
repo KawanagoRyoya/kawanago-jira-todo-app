@@ -109,10 +109,9 @@ document.getElementById('btn-delete-completed').addEventListener('click', async 
   renderView();
 });
 
-// btn-fetchはボタンとして残すが、何もしない
-// (将来的な機能追加のために保留)
+// btn-fetch: 機能開発中の通知
 document.getElementById('btn-fetch').addEventListener('click', () => {
-  showNotification('近日公開予定です');
+  showNotification('機能開発中🛠️実装をお楽しみに');
 });
 
 // 始業報告
