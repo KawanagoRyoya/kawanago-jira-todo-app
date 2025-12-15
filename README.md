@@ -24,9 +24,7 @@ kawanago-jira-todo-app/
 - 日々の ToDo と完了済みタスク（Done）の管理
 - 各タスクに対する Description（説明）と期限表示
 - 新規 ToDo の追加（Description と期限を登録）
-- `"Sprint取得"` ボタンで、ユーザーが調査して手動入力した Sprint ID を使ってタスクを表示
-- アプリ内のタスクを Jira の Sprint に新規作成・ステータス更新
-- `"ToDo"` と `"Backlog"` の 2 つの画面をボタンで切り替え（機能は同一）
+- `"ToDo"` と `"Backlog"` の 2 つの画面をボタンで切り替え
 - タブ内でのタスク追加機能
   - テキストボックスと「追加」ボタンを配置
   - キーボードショートカット:
@@ -43,13 +41,6 @@ kawanago-jira-todo-app/
 
 ## 実装済み要件
 - プロジェクト構成の整備（Electron 主プロセス、Renderer、環境変数管理）
-- Jira API 認証設定（Basic Auth: Email + API Token via `.env`）
-- Agile API からの Sprint 自動取得（GET `/board/{boardId}/sprint?state=active`）
-- 主な Jira エンドポイント実装  
-  - スプリント内タスク取得（GET `/search?jql=sprint={sprintId}`）  
-  - 課題ステータス更新（PUT `/issue/{issueId}/transitions`）  
-  - 新規課題作成（POST `/issue`）  
-- IPC 経由で Renderer⇔Main 間のデータ連携
 - ToDo セクション管理
   - 4つのセクション：
     1. マストワン（最大1件）
@@ -108,9 +99,6 @@ kawanago-jira-todo-app/
     - Other（無制限）
   - エリア内スクロール可能
 - Row4
-  - Sprint取得ボタン（アイコン: 🗂️）
-    - クリックで Sprint ID 入力欄表示（Placeholder: Your Sprint ID）
-    - 「Add」でタスク取得
   - 完了タスク削除ボタン（アイコン: 🗑️）
 - Row5
   - 始業報告ボタン（Start Work）
