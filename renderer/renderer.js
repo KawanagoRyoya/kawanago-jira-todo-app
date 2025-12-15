@@ -109,35 +109,8 @@ document.getElementById('btn-delete-completed').addEventListener('click', async 
   renderView();
 });
 
-// Sprint取得 → 入力欄表示
-const sprintInputEl  = document.getElementById('sprint-id-input');
-const sprintSubmitEl = document.getElementById('sprint-submit');
-document.getElementById('btn-fetch').addEventListener('click', () => {
-  setActiveNav('btn-fetch');
-  sprintInputEl.style.display  = 'block';
-  sprintSubmitEl.style.display = 'block';
-});
-sprintSubmitEl.addEventListener('click', async () => {
-  const sprintId = sprintInputEl.value.trim();
-  if (!sprintId) return;
-  sprintInputEl.style.display  = 'none';
-  sprintSubmitEl.style.display = 'none';
-  try {
-    const issues = await window.electronAPI.fetchSprint(sprintId);
-    todos = issues.map(i => ({
-      issueId:    i.key,
-      description:i.fields.summary,
-      dueDate:    i.fields.duedate,
-      status:     'ToDo',
-      section:    'other'
-    }));
-    await window.electronAPI.store.set('todos', todos);
-    renderView();
-  } catch (err) {
-    console.error(err);
-    showNotification('スプリント取得に失敗しました: ' + err.message);
-  }
-});
+// btn-fetchはボタンとして残すが、何もしない
+// (将来的な機能追加のために保留)
 
 // 始業報告
 document.getElementById('btn-report-start').addEventListener('click', async () => {
