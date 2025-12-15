@@ -111,6 +111,9 @@ document.getElementById('btn-delete-completed').addEventListener('click', async 
 
 // btn-fetchはボタンとして残すが、何もしない
 // (将来的な機能追加のために保留)
+document.getElementById('btn-fetch').addEventListener('click', () => {
+  showNotification('近日公開予定です');
+});
 
 // 始業報告
 document.getElementById('btn-report-start').addEventListener('click', async () => {
