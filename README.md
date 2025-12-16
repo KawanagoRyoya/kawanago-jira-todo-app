@@ -117,12 +117,8 @@ kawanago-jira-todo-app/
 ## 今後の実装予定
 - UI
   - ToDoとBacklogのタスクの幅を合わせる
-  - Sprint ID入力ボタンをもう一度クリックすると隠れる
   - タスクの入力箇所の横幅調節
   - ダークモード
-- Jira連携機能
-  - BacklogからEpicを作成することができる
-  - BacklogからTaskを作成することができる
 - 実績確認機能
   - ToDoAppで完了したToDoの実績を記録できる
     - Jira上で見られるのが良い

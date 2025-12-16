@@ -4,6 +4,8 @@ let todos = [];
 let backlog = [];
 let currentView = 'todo';
 let draggingElement = null;
+let isPomodoroMode = false; // ポモドーロモードの状態
+let selectedTasks = new Set(); // 選択されたタスクIDのセット
 
 const sectionLimit = {
   mustone: 1,
@@ -109,10 +111,59 @@ document.getElementById('btn-delete-completed').addEventListener('click', async 
   renderView();
 });
 
-// btn-fetch: 機能開発中の通知
-document.getElementById('btn-fetch').addEventListener('click', () => {
-  showNotification('機能開発中🛠️実装をお楽しみに');
+// btn-pomodoro: ポモドーロモードの切り替え
+document.getElementById('btn-pomodoro').addEventListener('click', () => {
+  isPomodoroMode = !isPomodoroMode;
+  selectedTasks.clear();
+  togglePomodoroMode();
 });
+
+// ポモドーロ開始ボタン
+document.getElementById('btn-pomodoro-start').addEventListener('click', () => {
+  if (selectedTasks.size === 0) {
+    showNotification('タスクを選択してください');
+    return;
+  }
+  // TODO: ポモドーロタイマー開始処理
+  showNotification(`${selectedTasks.size}件のタスクでポモドーロを開始します`);
+});
+
+// ポモドーロモードの切り替え
+function togglePomodoroMode() {
+  const reportRow = document.querySelector('.report-row');
+  const pomodoroRow = document.querySelector('.pomodoro-row');
+  const deleteBtn = document.getElementById('btn-delete-completed');
+  const todoBtn = document.getElementById('btn-todo');
+  const backlogBtn = document.getElementById('btn-backlog');
+  
+  if (isPomodoroMode) {
+    // ポモドーロモードに切り替え
+    reportRow.style.display = 'none';
+    pomodoroRow.style.display = 'flex';
+    deleteBtn.disabled = true;
+    deleteBtn.style.opacity = '0.5';
+    todoBtn.disabled = true;
+    backlogBtn.disabled = true;
+    
+    // ToDo画面に切り替え
+    if (currentView !== 'todo') {
+      currentView = 'todo';
+      setActiveNav('btn-todo');
+    }
+    
+    showNotification('ポモドーロモード：タスクを選択してください');
+  } else {
+    // 通常モードに戻る
+    reportRow.style.display = 'flex';
+    pomodoroRow.style.display = 'none';
+    deleteBtn.disabled = false;
+    deleteBtn.style.opacity = '1';
+    todoBtn.disabled = false;
+    backlogBtn.disabled = false;
+  }
+  
+  renderView();
+}
 
 // 始業報告
 document.getElementById('btn-report-start').addEventListener('click', async () => {
@@ -294,29 +345,48 @@ function renderTodoSections() {
       li.classList.add('completed');
     }
 
-    // 完了チェック
+    // チェックボックス or ラジオボタン
     const cb = document.createElement('input');
-    cb.type    = 'checkbox';
-    cb.checked = item.status === 'Done';
-    cb.addEventListener('change', async () => {
-      item.status = cb.checked ? 'Done' : 'ToDo';
-      
-      // DOMを消さずにliに状態クラスだけ付ける
-      li.classList.toggle('completed', cb.checked);
-      
-      await window.electronAPI.store.set('todos', todos);
-    });
+    
+    if (isPomodoroMode) {
+      // ポモドーロモード：ラジオボタン（複数選択可能）
+      cb.type = 'checkbox';
+      cb.className = 'pomodoro-radio';
+      cb.checked = selectedTasks.has(idx);
+      cb.addEventListener('change', () => {
+        if (cb.checked) {
+          selectedTasks.add(idx);
+        } else {
+          selectedTasks.delete(idx);
+        }
+      });
+    } else {
+      // 通常モード：チェックボックス
+      cb.type = 'checkbox';
+      cb.checked = item.status === 'Done';
+      cb.addEventListener('change', async () => {
+        item.status = cb.checked ? 'Done' : 'ToDo';
+        
+        // DOMを消さずにliに状態クラスだけ付ける
+        li.classList.toggle('completed', cb.checked);
+        
+        await window.electronAPI.store.set('todos', todos);
+      });
+    }
 
-    // SVGアイコン
-    const svg = document.createElementNS('http://www.w3.org/2000/svg', 'svg');
-    svg.setAttribute('viewBox', '0 0 200 25');
-    svg.setAttribute('class', 'todo__icon');
-    svg.innerHTML = `
-      <path class="todo__line"  d="M21 12.3h168v0.1z"></path>
-      <path class="todo__box"   d="M21 12.7v5c0 1.3-1 2.3-2.3 2.3H8.3C7 20 6 19 6 17.7V7.3C6 6 7 5 8.3 5h10.4C20 5 21 6 21 7.3v5.4"></path>
-      <path class="todo__check" d="M10 13l2 2 5-5"></path>
-      <circle class="todo__circle" cx="13.5" cy="12.5" r="10"></circle>
-    `;
+    // SVGアイコン（通常モードのみ）
+    let svg = null;
+    if (!isPomodoroMode) {
+      svg = document.createElementNS('http://www.w3.org/2000/svg', 'svg');
+      svg.setAttribute('viewBox', '0 0 200 25');
+      svg.setAttribute('class', 'todo__icon');
+      svg.innerHTML = `
+        <path class="todo__line"  d="M21 12.3h168v0.1z"></path>
+        <path class="todo__box"   d="M21 12.7v5c0 1.3-1 2.3-2.3 2.3H8.3C7 20 6 19 6 17.7V7.3C6 6 7 5 8.3 5h10.4C20 5 21 6 21 7.3v5.4"></path>
+        <path class="todo__check" d="M10 13l2 2 5-5"></path>
+        <circle class="todo__circle" cx="13.5" cy="12.5" r="10"></circle>
+      `;
+    }
 
     // 編集（ダブルクリック）
     const lbl = document.createElement('span');
@@ -348,9 +418,19 @@ function renderTodoSections() {
     moveBtn.className = 'icon-btn move-btn';
     moveBtn.title = 'Backlogへ移動';
     moveBtn.textContent = '📥';
+    moveBtn.disabled = isPomodoroMode;
+    if (isPomodoroMode) {
+      moveBtn.style.opacity = '0.3';
+      moveBtn.style.pointerEvents = 'none';
+    }
     moveBtn.addEventListener('click', () => moveTodoToBacklog(idx));
 
-    li.append(cb, svg, lbl, moveBtn);
+    // 要素を追加
+    if (isPomodoroMode) {
+      li.append(cb, lbl, moveBtn);
+    } else {
+      li.append(cb, svg, lbl, moveBtn);
+    }
     li.draggable = true;
     li.addEventListener('dragstart', e => {
       e.dataTransfer.setData('text/plain', idx);
