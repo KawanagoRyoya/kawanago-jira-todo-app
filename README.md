@@ -134,3 +134,5 @@ kawanago-jira-todo-app/
   - ToDoとBacklogそれぞれの画面で削除機能が分けられるようになる
 - 自動テスト
   - Playwrightを使った自動テスト
+- 削除リカバリ
+  - ToDoを削除しても ctrl+z で復元できる
