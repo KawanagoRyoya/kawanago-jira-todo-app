@@ -459,3 +459,14 @@ li.completed span {
     inset 2px 2px 5px #a3b1c6,
     inset -2px -2px 5px #ffffff;
 }
+
+.pomodoro-radio:disabled {
+  cursor: not-allowed;
+  opacity: 0.45;
+}
+
+.pomodoro-radio:disabled:hover {
+  box-shadow:
+    3px 3px 6px #a3b1c6,
+    -3px -3px 6px #ffffff;
+}

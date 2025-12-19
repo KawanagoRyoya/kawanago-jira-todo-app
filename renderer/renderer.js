@@ -352,8 +352,16 @@ function renderTodoSections() {
       // ポモドーロモード：ラジオボタン（複数選択可能）
       cb.type = 'checkbox';
       cb.className = 'pomodoro-radio';
-      cb.checked = selectedTasks.has(idx);
+      const isDone = item.status === 'Done';
+      cb.disabled = isDone;
+      if (isDone) {
+        selectedTasks.delete(idx);
+        cb.checked = false;
+      } else {
+        cb.checked = selectedTasks.has(idx);
+      }
       cb.addEventListener('change', () => {
+        if (cb.disabled) return;
         if (cb.checked) {
           selectedTasks.add(idx);
         } else {
