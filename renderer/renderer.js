@@ -272,7 +272,6 @@ async function requestPomodoroWindowResize() {
 
   const rows = Array.from(listEl.querySelectorAll('li'));
   const count = rows.length;
-  const visibleCount = Math.max(1, count);
   const DEFAULT_POMODORO_ROW_HEIGHT = 56;
 
   let rowHeight = DEFAULT_POMODORO_ROW_HEIGHT;
@@ -288,7 +287,7 @@ async function requestPomodoroWindowResize() {
   const timerRect = timerEl.getBoundingClientRect();
   const timerHeightNow = timerRect.height;
   const baseHeight = timerHeightNow - rowHeight * count;
-  const desiredTimerHeight = baseHeight + rowHeight * visibleCount;
+  const desiredTimerHeight = baseHeight + rowHeight * count;
   const clampedTimerHeight = desiredTimerHeight;
 
   // スクロール無しで全件表示（ウィンドウ高さで追従）
