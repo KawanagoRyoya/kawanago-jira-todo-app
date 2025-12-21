@@ -7,7 +7,7 @@ let draggingElement = null;
 let isPomodoroMode = false; // ポモドーロモードの状態
 let selectedTasks = new Set(); // 選択されたタスクIDのセット
 
-let pomodoroSavedContentHeight = null;
+let savedWindowHeightBeforePomodoro = null;
 
 // ポモドーロタイマー状態
 const POMODORO_FOCUS_MS = 25 * 60 * 1000;
