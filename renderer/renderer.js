@@ -273,8 +273,9 @@ async function requestPomodoroWindowResize() {
   const rows = Array.from(listEl.querySelectorAll('li'));
   const count = rows.length;
   const visibleCount = Math.max(1, count);
+  const DEFAULT_POMODORO_ROW_HEIGHT = 56;
 
-  let rowHeight = 56;
+  let rowHeight = DEFAULT_POMODORO_ROW_HEIGHT;
   let marginBottom = 0;
   if (rows[0]) {
     const r = rows[0].getBoundingClientRect();
