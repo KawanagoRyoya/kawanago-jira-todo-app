@@ -166,5 +166,7 @@ kawanago-jira-todo-app/
   - ToDoとBacklogそれぞれの画面で削除機能が分けられるようになる
 - 自動テスト
   - Playwrightを使った自動テスト
-- 技術負債
+pomodoro- 技術負債
   - 選択がidx依存のため、並び替えでズレる懸念：タスクに永続id付与する
+- 削除リカバリ
+  - ToDoを削除しても ctrl+z で復元できる
