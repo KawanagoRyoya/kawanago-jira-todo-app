@@ -296,7 +296,8 @@ async function requestPomodoroWindowResize() {
   listEl.style.overflowY = 'hidden';
 
   // 画面上端から timerEl 下端まで + 余白
-  const desiredContentHeight = Math.round(timerRect.top + clampedTimerHeight + 24);
+  const POMODORO_WINDOW_BOTTOM_PADDING = 24;
+  const desiredContentHeight = Math.round(timerRect.top + clampedTimerHeight + POMODORO_WINDOW_BOTTOM_PADDING);
 
   try {
     await window.electronAPI.window.setContentHeight(desiredContentHeight);
