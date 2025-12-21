@@ -362,10 +362,11 @@ function startPomodoroTimer(resetRemainingToFull) {
     pomodoroIntervalId = null;
   }
 
+  const POMODORO_TICK_INTERVAL_MS = 250;
   const now = Date.now();
   pomodoroEndAtMs = now + Math.max(0, pomodoroRemainingMs);
   pomodoroRunState = 'running';
-  pomodoroIntervalId = setInterval(tickPomodoro, 250);
+  pomodoroIntervalId = setInterval(tickPomodoro, POMODORO_TICK_INTERVAL_MS);
   updatePomodoroUI();
 }
 
