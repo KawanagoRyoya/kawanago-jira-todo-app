@@ -4,6 +4,9 @@ contextBridge.exposeInMainWorld('electronAPI', {
   get: (key) => ipcRenderer.invoke('electron-store-get', key),
   set: (key, v) => ipcRenderer.invoke('electron-store-set', key, v)
 },
+  window: {
+    setContentHeight: (height) => ipcRenderer.invoke('window-set-content-height', height)
+  },
   fetchSprint:   (id) => ipcRenderer.invoke('fetch-jira-sprint', id),
   syncToJira:    (data) => ipcRenderer.invoke('sync-to-jira', data),
   generateReport:(type,todos) => ipcRenderer.invoke('generate-report', type, todos),

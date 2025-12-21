@@ -46,6 +46,21 @@ body, div, input, button, select, textarea {
   flex: none;
 }
 
+/* ポモドーロ全画面モード（タイマー画面時のみ：通常UIは表示しない） */
+body.mode-pomodoro .toolbar,
+body.mode-pomodoro #todo-add-container,
+body.mode-pomodoro #backlog-add-container,
+body.mode-pomodoro #todo-view,
+body.mode-pomodoro #backlog-view,
+body.mode-pomodoro .report-row {
+  display: none !important;
+}
+
+/* ポモドーロ中はコンテンツを少し上寄せ */
+body.mode-pomodoro .app-container {
+  padding-top: 10px;
+}
+
 /* ボタン＆アイコン */
 .btn,
 .icon-btn {
@@ -167,9 +182,9 @@ body, div, input, button, select, textarea {
   padding-left: 40px;
 }
 
-/* チェックボックスのカスタムスタイル */
-.section-list li input[type="checkbox"],
-#backlog-list li input[type="checkbox"] {
+/* チェックボックスのカスタムスタイル（通常モードのみ透明化） */
+.section-list li input[type="checkbox"]:not(.pomodoro-radio),
+#backlog-list li input[type="checkbox"]:not(.pomodoro-radio) {
   position: absolute;
   top: 50%;
   left: 8px;
@@ -380,4 +395,230 @@ li.completed span {
     inset 3px 3px 6px #a3b1c6,
     inset -3px -3px 6px #ffffff;
   transform: scale(0.95);
+}
+
+/* ポモドーロモード用スタイル */
+.pomodoro-row {
+  width: 100%;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 14px;
+  margin-bottom: 16px;
+}
+
+.pomodoro-view {
+  width: 80vw;
+  max-width: 100%;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 14px;
+}
+
+.pomodoro-timer-top {
+  width: 100%;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.pomodoro-time {
+  font-size: 56px;
+  font-weight: 700;
+  letter-spacing: 1px;
+}
+
+.pomodoro-icon-btn {
+  width: 56px;
+  height: 56px;
+  padding: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.pomodoro-progress-track {
+  width: 100%;
+  height: 12px;
+  border-radius: 999px;
+  position: relative;
+  background: #e0e5ec;
+  box-shadow:
+    inset 3px 3px 6px #a3b1c6,
+    inset -3px -3px 6px #ffffff;
+}
+
+.pomodoro-progress-fill {
+  height: 100%;
+  width: 0%;
+  border-radius: 999px;
+  background: #5B9BD5;
+  box-shadow:
+    2px 2px 4px rgba(44, 95, 141, 0.25);
+  transition: width 0.2s linear;
+}
+
+.pomodoro-progress-knob {
+  position: absolute;
+  top: 50%;
+  left: 0%;
+  transform: translate(-50%, -50%);
+  width: 18px;
+  height: 18px;
+  border-radius: 50%;
+  background: #FFB3BA;
+  box-shadow:
+    2px 2px 4px rgba(163, 177, 198, 0.5),
+    -2px -2px 4px rgba(255, 255, 255, 0.9);
+  transition: left 0.2s linear;
+}
+
+.pomodoro-controls {
+  width: 100%;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+}
+
+.pomodoro-control-btn {
+  width: 64px;
+  height: 64px;
+  padding: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.pomodoro-selected-list {
+  width: 100%;
+  list-style: none;
+  padding: 8px;
+  margin: 0;
+  background: #e0e5ec;
+  border-radius: 12px;
+  box-shadow: inset 3px 3px 6px #a3b1c6, inset -3px -3px 6px #ffffff;
+  overflow-y: hidden;
+  box-sizing: border-box;
+}
+
+.pomodoro-selected-list li {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  position: relative;
+  padding: 8px;
+  padding-left: 40px;
+  margin-bottom: 8px;
+  border-radius: 8px;
+  background: #e0e5ec;
+  box-shadow:
+    3px 3px 6px #a3b1c6,
+    -3px -3px 6px #ffffff;
+}
+
+.pomodoro-selected-list li.completed {
+  opacity: 0.55;
+}
+
+.pomodoro-selected-list li span {
+  color: #2C5F8D;
+  transition: all 0.24s ease;
+  flex: 1;
+  text-decoration: none;
+  word-wrap: break-word;
+  overflow-wrap: break-word;
+}
+
+/* タイマー画面のチェックボックスもToDo同様に透明化し、SVGを見せる */
+.pomodoro-selected-list li input[type="checkbox"] {
+  position: absolute;
+  top: 50%;
+  left: 8px;
+  transform: translateY(-50%);
+  width: 24px;
+  height: 24px;
+  opacity: 0;
+  cursor: pointer;
+  z-index: 2;
+}
+
+.btn-pomodoro-start {
+  min-width: 200px;
+  font-size: 18px;
+  font-weight: bold;
+}
+
+/* ポモドーロ用ラジオボタン（薄い赤色） */
+.pomodoro-radio {
+  appearance: none;
+  -webkit-appearance: none;
+  position: absolute;
+  top: 43%;
+  left: 5px;
+  transform: translateY(-50%);
+  width: 24px;
+  height: 24px;
+  border-radius: 50%;
+  background: #e0e5ec;
+  /* 未チェック時：出っ張った状態（外側のシャドウ） */
+  box-shadow: 
+    3px 3px 6px #a3b1c6,
+    -3px -3px 6px #ffffff;
+  cursor: pointer;
+  z-index: 2;
+  transition: all 0.3s ease;
+}
+
+/* 未チェック時：中央に薄いグレーの点 */
+.pomodoro-radio::before {
+  content: '';
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: #b8c2cc;
+  transition: all 0.3s ease;
+}
+
+/* チェック時：引っ込んだ状態（内側のシャドウ） */
+.pomodoro-radio:checked {
+  background: #e0e5ec;
+  box-shadow: 
+    inset 3px 3px 6px #a3b1c6,
+    inset -3px -3px 6px #ffffff;
+}
+
+/* チェック時：中央の点が薄い赤に変化 */
+.pomodoro-radio:checked::before {
+  background: linear-gradient(135deg, #FFB3BA 0%, #FF8B94 100%);
+  width: 10px;
+  height: 10px;
+  box-shadow: 0 1px 3px rgba(255, 139, 148, 0.3);
+}
+
+.pomodoro-radio:hover {
+  box-shadow: 
+    2px 2px 5px #a3b1c6,
+    -2px -2px 5px #ffffff;
+}
+
+.pomodoro-radio:checked:hover {
+  box-shadow: 
+    inset 2px 2px 5px #a3b1c6,
+    inset -2px -2px 5px #ffffff;
+}
+
+.pomodoro-radio:disabled {
+  cursor: not-allowed;
+  opacity: 0.45;
+}
+
+.pomodoro-radio:disabled:hover {
+  box-shadow:
+    3px 3px 6px #a3b1c6,
+    -3px -3px 6px #ffffff;
 }
