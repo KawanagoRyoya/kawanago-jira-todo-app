@@ -11,6 +11,7 @@ const Store = require('electron-store');
 const store = new Store();
 
 // ウィンドウ高さ調整用（rendererからcontentHeight指定で受け取る）
+const MIN_WINDOW_HEIGHT = 200;
 ipcMain.handle('window-set-content-height', async (event, desiredContentHeight) => {
   const win = BrowserWindow.fromWebContents(event.sender);
   if (!win) return;
@@ -18,7 +19,7 @@ ipcMain.handle('window-set-content-height', async (event, desiredContentHeight) 
   const bounds = win.getBounds();
   const contentBounds = win.getContentBounds();
   const frameDelta = bounds.height - contentBounds.height;
-  const nextHeight = Math.max(200, Math.round(Number(desiredContentHeight || 0) + frameDelta));
+  const nextHeight = Math.max(MIN_WINDOW_HEIGHT, Math.round(Number(desiredContentHeight || 0) + frameDelta));
 
   win.setBounds({ x: bounds.x, y: bounds.y, width: bounds.width, height: nextHeight });
 });
