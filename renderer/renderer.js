@@ -7,6 +7,20 @@ let draggingElement = null;
 let isPomodoroMode = false; // ポモドーロモードの状態
 let selectedTasks = new Set(); // 選択されたタスクIDのセット
 
+let pomodoroSavedContentHeight = null;
+
+// ポモドーロタイマー状態
+const POMODORO_FOCUS_MS = 25 * 60 * 1000;
+const POMODORO_BREAK_MS = 5 * 60 * 1000;
+let pomodoroView = 'select'; // 'select' | 'timer'
+let pomodoroPhase = 'focus'; // 'focus' | 'break'
+let pomodoroRunState = 'stopped'; // 'running' | 'paused' | 'stopped'
+let pomodoroTotalMs = POMODORO_FOCUS_MS;
+let pomodoroRemainingMs = POMODORO_FOCUS_MS;
+let pomodoroEndAtMs = null;
+let pomodoroIntervalId = null;
+let pomodoroSessionTaskIndexes = [];
+
 const sectionLimit = {
   mustone: 1,
   medium:  3,
@@ -113,9 +127,24 @@ document.getElementById('btn-delete-completed').addEventListener('click', async 
 
 // btn-pomodoro: ポモドーロモードの切り替え
 document.getElementById('btn-pomodoro').addEventListener('click', () => {
+  // 入退場前に、通常時の高さを記録しておく（復帰用）
+  if (!isPomodoroMode) {
+    pomodoroSavedContentHeight = document.documentElement.clientHeight;
+  }
+
   isPomodoroMode = !isPomodoroMode;
   selectedTasks.clear();
+  pomodoroView = 'select';
+  stopPomodoroTimer(true);
   togglePomodoroMode();
+
+  // 選択画面では通常UIを見せる（全画面化はStart後のタイマー画面のみ）
+  setPomodoroFullscreen(false);
+
+  // 退出時は高さを戻す
+  if (!isPomodoroMode) {
+    restoreWindowHeightIfNeeded();
+  }
 });
 
 // ポモドーロ開始ボタン
@@ -124,8 +153,54 @@ document.getElementById('btn-pomodoro-start').addEventListener('click', () => {
     showNotification('タスクを選択してください');
     return;
   }
-  // TODO: ポモドーロタイマー開始処理
-  showNotification(`${selectedTasks.size}件のタスクでポモドーロを開始します`);
+  cleanSelectedTasks();
+  pomodoroSessionTaskIndexes = Array.from(selectedTasks);
+  pomodoroView = 'timer';
+  setPomodoroPhase('focus', true);
+  startPomodoroTimer(true);
+  renderPomodoroSelectedList();
+  updatePomodoroViews();
+  updatePomodoroUI();
+  showNotification(`${pomodoroSessionTaskIndexes.length}件のタスクでポモドーロを開始します`);
+
+  // Start後は全画面ポモドーロ（通常UIと選択画面を非表示）
+  setPomodoroFullscreen(true);
+
+  // タイマー画面に入ったら高さを追従
+  requestPomodoroWindowResize();
+});
+
+// ポモドーロ：🏠で選択画面に戻る（タイマー停止・次回は25:00から）
+document.getElementById('btn-pomodoro-home').addEventListener('click', () => {
+  stopPomodoroTimer(true);
+  cleanSelectedTasks();
+  pomodoroSessionTaskIndexes = [];
+  pomodoroView = 'select';
+  updatePomodoroViews();
+  // 選択画面に戻ったら通常UIを表示＆高さ復帰
+  setPomodoroFullscreen(false);
+  restoreWindowHeightIfNeeded();
+  renderView();
+});
+
+// ポモドーロ：作業/休憩切替（手動。残り時間リセット）
+document.getElementById('btn-pomodoro-switch-phase').addEventListener('click', () => {
+  const next = pomodoroPhase === 'focus' ? 'break' : 'focus';
+  setPomodoroPhase(next, true);
+  if (pomodoroRunState === 'running') {
+    startPomodoroTimer(true);
+  } else {
+    updatePomodoroUI();
+  }
+});
+
+// ポモドーロ：再開/一時停止
+document.getElementById('btn-pomodoro-toggle-run').addEventListener('click', () => {
+  if (pomodoroRunState === 'running') {
+    pausePomodoroTimer();
+  } else {
+    startPomodoroTimer(false);
+  }
 });
 
 // ポモドーロモードの切り替え
@@ -140,6 +215,9 @@ function togglePomodoroMode() {
     // ポモドーロモードに切り替え
     reportRow.style.display = 'none';
     pomodoroRow.style.display = 'flex';
+    pomodoroView = 'select';
+    stopPomodoroTimer(true);
+    updatePomodoroViews();
     deleteBtn.disabled = true;
     deleteBtn.style.opacity = '0.5';
     todoBtn.disabled = true;
@@ -156,6 +234,8 @@ function togglePomodoroMode() {
     // 通常モードに戻る
     reportRow.style.display = 'flex';
     pomodoroRow.style.display = 'none';
+    pomodoroView = 'select';
+    stopPomodoroTimer(true);
     deleteBtn.disabled = false;
     deleteBtn.style.opacity = '1';
     todoBtn.disabled = false;
@@ -163,6 +243,252 @@ function togglePomodoroMode() {
   }
   
   renderView();
+}
+
+function setPomodoroFullscreen(active) {
+  document.body.classList.toggle('mode-pomodoro', !!active);
+}
+
+async function restoreWindowHeightIfNeeded() {
+  if (!window.electronAPI?.window?.setContentHeight) return;
+  if (!pomodoroSavedContentHeight) return;
+  try {
+    await window.electronAPI.window.setContentHeight(pomodoroSavedContentHeight);
+  } catch (_) {
+    // ignore
+  }
+}
+
+async function requestPomodoroWindowResize() {
+  if (!isPomodoroMode || pomodoroView !== 'timer') return;
+  if (!window.electronAPI?.window?.setContentHeight) return;
+
+  const timerEl = document.getElementById('pomodoro-view-timer');
+  const listEl = document.getElementById('pomodoro-selected-list');
+  if (!timerEl || !listEl) return;
+
+  // DOMが反映されてから測る
+  await new Promise(requestAnimationFrame);
+
+  const rows = Array.from(listEl.querySelectorAll('li'));
+  const count = rows.length;
+  const visibleCount = Math.max(1, count);
+
+  let rowHeight = 56;
+  let marginBottom = 0;
+  if (rows[0]) {
+    const r = rows[0].getBoundingClientRect();
+    rowHeight = r.height;
+    const mb = parseFloat(getComputedStyle(rows[0]).marginBottom || '0');
+    if (!Number.isNaN(mb)) marginBottom = mb;
+    rowHeight += marginBottom;
+  }
+
+  const timerRect = timerEl.getBoundingClientRect();
+  const timerHeightNow = timerRect.height;
+  const baseHeight = timerHeightNow - rowHeight * count;
+  const minTimerHeight = baseHeight + rowHeight * 1;
+  const maxTimerHeight = baseHeight + rowHeight * visibleCount;
+  const desiredTimerHeight = baseHeight + rowHeight * visibleCount;
+  const clampedTimerHeight = Math.max(minTimerHeight, Math.min(maxTimerHeight, desiredTimerHeight));
+
+  // スクロール無しで全件表示（ウィンドウ高さで追従）
+  listEl.style.maxHeight = 'none';
+  listEl.style.overflowY = 'hidden';
+
+  // 画面上端から timerEl 下端まで + 余白
+  const desiredContentHeight = Math.round(timerRect.top + clampedTimerHeight + 24);
+
+  try {
+    await window.electronAPI.window.setContentHeight(desiredContentHeight);
+  } catch (_) {
+    // ignore
+  }
+}
+
+function getPomodoroDurationMs(phase) {
+  return phase === 'break' ? POMODORO_BREAK_MS : POMODORO_FOCUS_MS;
+}
+
+function formatPomodoroTime(ms) {
+  const clamped = Math.max(0, ms);
+  const totalSeconds = Math.ceil(clamped / 1000);
+  const minutes = Math.floor(totalSeconds / 60);
+  const seconds = totalSeconds % 60;
+  return `${String(minutes).padStart(2, '0')}:${String(seconds).padStart(2, '0')}`;
+}
+
+function cleanSelectedTasks() {
+  // Doneや範囲外は選択から除外
+  for (const idx of Array.from(selectedTasks)) {
+    const item = todos[idx];
+    if (!item || item.status === 'Done') {
+      selectedTasks.delete(idx);
+    }
+  }
+}
+
+function setPomodoroPhase(phase, reset) {
+  pomodoroPhase = phase;
+  pomodoroTotalMs = getPomodoroDurationMs(phase);
+  if (reset) {
+    pomodoroRemainingMs = pomodoroTotalMs;
+    pomodoroEndAtMs = null;
+  }
+  updatePomodoroUI();
+}
+
+function updatePomodoroViews() {
+  const selectEl = document.getElementById('pomodoro-view-select');
+  const timerEl = document.getElementById('pomodoro-view-timer');
+  if (!selectEl || !timerEl) return;
+  if (!isPomodoroMode) {
+    selectEl.style.display = 'none';
+    timerEl.style.display = 'none';
+    return;
+  }
+  selectEl.style.display = pomodoroView === 'select' ? 'flex' : 'none';
+  timerEl.style.display = pomodoroView === 'timer' ? 'flex' : 'none';
+}
+
+function startPomodoroTimer(resetRemainingToFull) {
+  if (resetRemainingToFull) {
+    pomodoroTotalMs = getPomodoroDurationMs(pomodoroPhase);
+    pomodoroRemainingMs = pomodoroTotalMs;
+  }
+
+  if (pomodoroIntervalId) {
+    clearInterval(pomodoroIntervalId);
+    pomodoroIntervalId = null;
+  }
+
+  const now = Date.now();
+  pomodoroEndAtMs = now + Math.max(0, pomodoroRemainingMs);
+  pomodoroRunState = 'running';
+  pomodoroIntervalId = setInterval(tickPomodoro, 250);
+  updatePomodoroUI();
+}
+
+function pausePomodoroTimer() {
+  if (pomodoroRunState !== 'running') return;
+  const now = Date.now();
+  pomodoroRemainingMs = Math.max(0, (pomodoroEndAtMs || now) - now);
+  if (pomodoroIntervalId) {
+    clearInterval(pomodoroIntervalId);
+    pomodoroIntervalId = null;
+  }
+  pomodoroEndAtMs = null;
+  pomodoroRunState = 'paused';
+  updatePomodoroUI();
+}
+
+function stopPomodoroTimer(resetToFocus) {
+  if (pomodoroIntervalId) {
+    clearInterval(pomodoroIntervalId);
+    pomodoroIntervalId = null;
+  }
+  pomodoroRunState = 'stopped';
+  pomodoroEndAtMs = null;
+  if (resetToFocus) {
+    pomodoroPhase = 'focus';
+    pomodoroTotalMs = POMODORO_FOCUS_MS;
+    pomodoroRemainingMs = POMODORO_FOCUS_MS;
+  }
+  updatePomodoroUI();
+}
+
+function tickPomodoro() {
+  if (pomodoroRunState !== 'running') return;
+  const now = Date.now();
+  const remaining = Math.max(0, (pomodoroEndAtMs || now) - now);
+  pomodoroRemainingMs = remaining;
+
+  if (remaining <= 0) {
+    const from = pomodoroPhase;
+    const next = pomodoroPhase === 'focus' ? 'break' : 'focus';
+    showNotification(from === 'focus' ? '作業時間が終了しました。休憩を開始します' : '休憩が終了しました。作業を開始します');
+    pomodoroPhase = next;
+    pomodoroTotalMs = getPomodoroDurationMs(next);
+    pomodoroRemainingMs = pomodoroTotalMs;
+    pomodoroEndAtMs = Date.now() + pomodoroTotalMs;
+  }
+
+  updatePomodoroUI();
+}
+
+function updatePomodoroUI() {
+  const timeEl = document.getElementById('pomodoro-time');
+  const fillEl = document.getElementById('pomodoro-progress-fill');
+  const knobEl = document.getElementById('pomodoro-progress-knob');
+  const switchBtn = document.getElementById('btn-pomodoro-switch-phase');
+  const toggleBtn = document.getElementById('btn-pomodoro-toggle-run');
+
+  if (timeEl) {
+    timeEl.textContent = formatPomodoroTime(pomodoroRemainingMs);
+  }
+
+  const total = Math.max(1, pomodoroTotalMs);
+  const progress = Math.min(1, Math.max(0, 1 - pomodoroRemainingMs / total));
+  const pct = progress * 100;
+  if (fillEl) fillEl.style.width = `${pct}%`;
+  if (knobEl) knobEl.style.left = `${pct}%`;
+
+  if (switchBtn) {
+    const icon = pomodoroPhase === 'focus' ? '🍵' : '✒️';
+    switchBtn.querySelector('.icon').textContent = icon;
+  }
+
+  if (toggleBtn) {
+    const isRunning = pomodoroRunState === 'running';
+    toggleBtn.querySelector('.icon').textContent = isRunning ? '⏸️' : '▶️';
+    toggleBtn.title = isRunning ? '一時停止' : '再開';
+  }
+}
+
+function renderPomodoroSelectedList() {
+  const ul = document.getElementById('pomodoro-selected-list');
+  if (!ul) return;
+  ul.innerHTML = '';
+
+  pomodoroSessionTaskIndexes.forEach(idx => {
+    const item = todos[idx];
+    if (!item) return;
+
+    const li = document.createElement('li');
+    li.classList.toggle('completed', item.status === 'Done');
+
+    const cb = document.createElement('input');
+    cb.type = 'checkbox';
+    cb.checked = item.status === 'Done';
+
+    cb.addEventListener('change', async () => {
+      // ポモドーロ中は通知を出さず、Done↔ToDoを許可
+      item.status = cb.checked ? 'Done' : 'ToDo';
+      li.classList.toggle('completed', cb.checked);
+      await window.electronAPI.store.set('todos', todos);
+      // 選択の維持は崩さない（🏠で戻る際に cleanSelectedTasks が Done を除外する）
+      // 完了トグルでウィンドウがガタつくのを防ぐため、ここではリサイズしない
+    });
+
+    // SVGアイコン（ToDoと同じ見た目）
+    const svg = document.createElementNS('http://www.w3.org/2000/svg', 'svg');
+    svg.setAttribute('viewBox', '0 0 200 25');
+    svg.setAttribute('class', 'todo__icon');
+    svg.innerHTML = `
+      <path class="todo__line"  d="M21 12.3h168v0.1z"></path>
+      <path class="todo__box"   d="M21 12.7v5c0 1.3-1 2.3-2.3 2.3H8.3C7 20 6 19 6 17.7V7.3C6 6 7 5 8.3 5h10.4C20 5 21 6 21 7.3v5.4"></path>
+      <path class="todo__check" d="M10 13l2 2 5-5"></path>
+      <circle class="todo__circle" cx="13.5" cy="12.5" r="10"></circle>
+    `;
+
+    const text = document.createElement('span');
+    text.textContent = item.description;
+
+    li.append(cb, svg, text);
+    ul.appendChild(li);
+  });
+
+  requestPomodoroWindowResize();
 }
 
 // 始業報告
@@ -687,8 +1013,17 @@ function renderView() {
   document.getElementById('todo-add-container').style.display    = currentView === 'todo'    ? 'flex' : 'none';
   document.getElementById('backlog-add-container').style.display = currentView === 'backlog' ? 'flex' : 'none';
   // Row3
-  document.getElementById('todo-view').style.display    = currentView === 'todo'    ? 'flex' : 'none';
+  const isPomodoroTimerView = isPomodoroMode && pomodoroView === 'timer';
+  document.getElementById('todo-view').style.display    = (currentView === 'todo' && !isPomodoroTimerView) ? 'flex' : 'none';
   document.getElementById('backlog-view').style.display = currentView === 'backlog' ? 'flex' : 'none';
+
+  updatePomodoroViews();
+
+  if (isPomodoroTimerView) {
+    updatePomodoroUI();
+    renderPomodoroSelectedList();
+    return;
+  }
 
   if (currentView === 'todo') {
     renderTodoSections();

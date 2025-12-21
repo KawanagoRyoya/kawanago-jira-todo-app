@@ -82,7 +82,31 @@
     
     <!-- Row5': ポモドーロ開始ボタン -->
     <div class="pomodoro-row" style="display:none">
-      <button id="btn-pomodoro-start" class="btn btn-pomodoro-start">Start</button>
+      <!-- Select view: タスク選択後にStart -->
+      <div id="pomodoro-view-select" class="pomodoro-view">
+        <button id="btn-pomodoro-start" class="btn btn-pomodoro-start">Start</button>
+      </div>
+
+      <!-- Timer view: タイマー実行 -->
+      <div id="pomodoro-view-timer" class="pomodoro-view" style="display:none">
+        <div class="pomodoro-timer-top">
+          <button id="btn-pomodoro-home" class="icon-btn pomodoro-icon-btn" aria-label="Home" title="選択画面に戻る"><span class="icon">🏠</span></button>
+          <button id="btn-pomodoro-switch-phase" class="icon-btn pomodoro-icon-btn" aria-label="Switch" title="作業/休憩を切り替え"><span class="icon">🍵</span></button>
+        </div>
+
+        <div id="pomodoro-time" class="pomodoro-time">25:00</div>
+
+        <div class="pomodoro-progress-track" aria-label="Pomodoro progress">
+          <div id="pomodoro-progress-fill" class="pomodoro-progress-fill"></div>
+          <div id="pomodoro-progress-knob" class="pomodoro-progress-knob"></div>
+        </div>
+
+        <div class="pomodoro-controls">
+          <button id="btn-pomodoro-toggle-run" class="icon-btn pomodoro-control-btn" aria-label="Pause/Resume" title="一時停止"><span class="icon">⏸</span></button>
+        </div>
+
+        <ul id="pomodoro-selected-list" class="pomodoro-selected-list"></ul>
+      </div>
     </div>
   </div>
 
