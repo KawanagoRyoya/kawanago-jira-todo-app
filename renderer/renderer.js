@@ -287,10 +287,8 @@ async function requestPomodoroWindowResize() {
   const timerRect = timerEl.getBoundingClientRect();
   const timerHeightNow = timerRect.height;
   const baseHeight = timerHeightNow - rowHeight * count;
-  const minTimerHeight = baseHeight + rowHeight * 1;
-  const maxTimerHeight = baseHeight + rowHeight * visibleCount;
   const desiredTimerHeight = baseHeight + rowHeight * visibleCount;
-  const clampedTimerHeight = Math.max(minTimerHeight, Math.min(maxTimerHeight, desiredTimerHeight));
+  const clampedTimerHeight = desiredTimerHeight;
 
   // スクロール無しで全件表示（ウィンドウ高さで追従）
   listEl.style.maxHeight = 'none';
