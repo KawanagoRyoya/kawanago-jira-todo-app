@@ -163,9 +163,7 @@ kawanago-jira-todo-app/
   - マストワンタスクのLabelをつけることができる
   - PJ名/Epic名のLabelをつけることができる ※優先度Low
 - 状態管理ライブラリの導入（Redux/Context）
-- 微修正
-  - ToDoとBacklogそれぞれの画面で削除機能が分けられるようになる
 - 自動テスト
   - Playwrightを使った自動テスト
-pomodoro- 技術負債
+- pomodoro 技術負債
   - 選択がidx依存のため、並び替えでズレる懸念：タスクに永続id付与する
