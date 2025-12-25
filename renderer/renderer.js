@@ -7,6 +7,72 @@ let draggingElement = null;
 let isPomodoroMode = false; // ポモドーロモードの状態
 let selectedTasks = new Set(); // 選択されたタスクIDのセット
 
+// Undo（Ctrl+Z）用：削除操作の取り消し
+const UNDO_STACK_LIMIT = 50;
+let undoStack = [];
+
+function cloneData(value) {
+  if (typeof structuredClone === 'function') return structuredClone(value);
+
+  // Fallback: JSON-based deep clone. This may lose non-JSON-serializable data.
+  console.warn(
+    '[cloneData] structuredClone is not available; ' +
+    'falling back to JSON-based cloning. This JSON-based approach cannot ' +
+    'reliably preserve functions, Date objects, undefined values, symbols, ' +
+    'circular references, or other non-JSON-serializable structures (e.g., Map/Set).'
+  );
+  try {
+    return JSON.parse(JSON.stringify(value));
+  } catch (err) {
+    console.error(
+      '[cloneData] JSON-based cloning failed; data may not be fully serializable:',
+      err,
+      value
+    );
+    throw err;
+  }
+}
+
+function pushUndo(action) {
+  undoStack.push(action);
+  if (undoStack.length > UNDO_STACK_LIMIT) {
+    undoStack.splice(0, undoStack.length - UNDO_STACK_LIMIT);
+  }
+}
+
+function isEditableElement(el) {
+  if (!el) return false;
+  if (el.isContentEditable) return true;
+  const tag = (el.tagName || '').toLowerCase();
+  return tag === 'input' || tag === 'textarea' || tag === 'select';
+}
+
+function replaceArrayContents(target, source) {
+  target.length = 0;
+  target.push(...source);
+}
+
+async function performUndo() {
+  const action = undoStack.pop();
+  if (!action) return;
+
+  if (action.type === 'delete-completed') {
+    const restoredTodos = cloneData(action.todos);
+    const restoredBacklog = cloneData(action.backlog);
+
+    // Update existing arrays in place to avoid invalidating external references.
+    replaceArrayContents(todos, restoredTodos);
+    replaceArrayContents(backlog, restoredBacklog);
+    await window.electronAPI.store.set('todos', todos);
+    await window.electronAPI.store.set('backlog', backlog);
+    showNotification('削除を取り消しました');
+    renderView();
+  } else {
+    console.warn('Unsupported undo action type:', action.type);
+    showNotification('この操作は元に戻せません');
+  }
+}
+
 let savedWindowHeightBeforePomodoro = null;
 
 // ポモドーロタイマー状態
@@ -116,7 +182,43 @@ document.getElementById('btn-backlog').addEventListener('click', () => {
   currentView = 'backlog';
   renderView();
 });
+
+// Ctrl+Z: Undo（ToDo/Backlog削除の取り消し）
+document.addEventListener('keydown', async (e) => {
+  const isCtrlOrCmd = e.ctrlKey || e.metaKey;
+  if (!isCtrlOrCmd || e.shiftKey) return;
+
+  if (e.key.toLowerCase() !== 'z') return;
+
+  // 入力欄のCtrl+Zは、ブラウザ標準のUndo（テキスト編集）を優先
+  if (isEditableElement(document.activeElement)) return;
+
+  e.preventDefault();
+  try {
+    await performUndo();
+  } catch (err) {
+    console.error(err);
+    showNotification('Undoに失敗しました');
+  }
+});
+
 document.getElementById('btn-delete-completed').addEventListener('click', async () => {
+  let hasDone = todos.some(t => t.status === 'Done');
+  if (!hasDone) {
+    hasDone = backlog.some(t => t.status === 'Done');
+  }
+  if (!hasDone) {
+    showNotification('完了タスクはありません');
+    return;
+  }
+
+  // 削除前状態をUndoスタックに積む
+  pushUndo({
+    type: 'delete-completed',
+    todos: cloneData(todos),
+    backlog: cloneData(backlog)
+  });
+
   todos   = todos.filter(t => t.status !== 'Done');
   backlog = backlog.filter(t => t.status !== 'Done');
   await window.electronAPI.store.set('todos', todos);
