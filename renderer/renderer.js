@@ -174,7 +174,10 @@ document.addEventListener('keydown', async (e) => {
 });
 
 document.getElementById('btn-delete-completed').addEventListener('click', async () => {
-  const hasDone = todos.some(t => t.status === 'Done') || backlog.some(t => t.status === 'Done');
+  let hasDone = todos.some(t => t.status === 'Done');
+  if (!hasDone) {
+    hasDone = backlog.some(t => t.status === 'Done');
+  }
   if (!hasDone) {
     showNotification('完了タスクはありません');
     return;
