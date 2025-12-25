@@ -17,7 +17,9 @@ function cloneData(value) {
   // Fallback: JSON-based deep clone. This may lose non-JSON-serializable data.
   console.warn(
     '[cloneData] structuredClone is not available; ' +
-    'falling back to JSON-based cloning which may drop non-serializable fields.'
+    'falling back to JSON-based cloning. This JSON-based approach cannot ' +
+    'reliably preserve functions, Date objects, undefined values, symbols, ' +
+    'circular references, or other non-JSON-serializable structures (e.g., Map/Set).'
   );
   try {
     return JSON.parse(JSON.stringify(value));
