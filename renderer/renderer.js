@@ -13,7 +13,22 @@ let undoStack = [];
 
 function cloneData(value) {
   if (typeof structuredClone === 'function') return structuredClone(value);
-  return JSON.parse(JSON.stringify(value));
+
+  // Fallback: JSON-based deep clone. This may lose non-JSON-serializable data.
+  console.warn(
+    '[cloneData] structuredClone is not available; ' +
+    'falling back to JSON-based cloning which may drop non-serializable fields.'
+  );
+  try {
+    return JSON.parse(JSON.stringify(value));
+  } catch (err) {
+    console.error(
+      '[cloneData] JSON-based cloning failed; data may not be fully serializable:',
+      err,
+      value
+    );
+    throw err;
+  }
 }
 
 function pushUndo(action) {
