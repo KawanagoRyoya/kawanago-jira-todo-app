@@ -34,7 +34,7 @@ function cloneData(value) {
 function pushUndo(action) {
   undoStack.push(action);
   if (undoStack.length > UNDO_STACK_LIMIT) {
-    undoStack = undoStack.slice(-UNDO_STACK_LIMIT);
+    undoStack.splice(0, undoStack.length - UNDO_STACK_LIMIT);
   }
 }
 
