@@ -64,7 +64,7 @@ async function performUndo() {
     showNotification('削除を取り消しました');
     renderView();
   } else {
-    console.warn('Unsupported undo action type:', action.type, action);
+    console.warn('Unsupported undo action type:', action && action.type);
     showNotification('この操作は元に戻せません');
   }
 }
