@@ -184,7 +184,7 @@ document.addEventListener('keydown', async (e) => {
   const isCtrlOrCmd = e.ctrlKey || e.metaKey;
   if (!isCtrlOrCmd || e.shiftKey) return;
 
-  if ((e.key || '').toLowerCase() !== 'z') return;
+  if (e.key.toLowerCase() !== 'z') return;
 
   // 入力欄のCtrl+Zは、ブラウザ標準のUndo（テキスト編集）を優先
   if (isEditableElement(document.activeElement)) return;
