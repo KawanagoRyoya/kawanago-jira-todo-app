@@ -50,8 +50,15 @@ async function performUndo() {
   if (!action) return;
 
   if (action.type === 'delete-completed') {
-    todos = cloneData(action.todos);
-    backlog = cloneData(action.backlog);
+    const restoredTodos = cloneData(action.todos);
+    const restoredBacklog = cloneData(action.backlog);
+
+    // Update existing arrays in place to avoid invalidating external references.
+    todos.length = 0;
+    todos.push(...restoredTodos);
+
+    backlog.length = 0;
+    backlog.push(...restoredBacklog);
     await window.electronAPI.store.set('todos', todos);
     await window.electronAPI.store.set('backlog', backlog);
     showNotification('削除を取り消しました');
