@@ -57,14 +57,13 @@ async function performUndo() {
   if (!action) return;
 
   if (action.type === 'delete-completed') {
-    const restoredTodos = cloneData(action.todos);
-    const restoredBacklog = cloneData(action.backlog);
+    const listKey = action.listKey;
+    const restored = cloneData(action.before);
+    const targetList = listKey === 'backlog' ? backlog : todos;
 
     // Update existing arrays in place to avoid invalidating external references.
-    replaceArrayContents(todos, restoredTodos);
-    replaceArrayContents(backlog, restoredBacklog);
-    await window.electronAPI.store.set('todos', todos);
-    await window.electronAPI.store.set('backlog', backlog);
+    replaceArrayContents(targetList, restored);
+    await window.electronAPI.store.set(listKey, targetList);
     showNotification('削除を取り消しました');
     renderView();
   } else {
@@ -203,10 +202,9 @@ document.addEventListener('keydown', async (e) => {
 });
 
 document.getElementById('btn-delete-completed').addEventListener('click', async () => {
-  let hasDone = todos.some(t => t.status === 'Done');
-  if (!hasDone) {
-    hasDone = backlog.some(t => t.status === 'Done');
-  }
+  const listKey = currentView === 'backlog' ? 'backlog' : 'todos';
+  const targetList = listKey === 'backlog' ? backlog : todos;
+  const hasDone = targetList.some(t => t.status === 'Done');
   if (!hasDone) {
     showNotification('完了タスクはありません');
     return;
@@ -215,14 +213,13 @@ document.getElementById('btn-delete-completed').addEventListener('click', async 
   // 削除前状態をUndoスタックに積む
   pushUndo({
     type: 'delete-completed',
-    todos: cloneData(todos),
-    backlog: cloneData(backlog)
+    listKey,
+    before: cloneData(targetList)
   });
 
-  todos   = todos.filter(t => t.status !== 'Done');
-  backlog = backlog.filter(t => t.status !== 'Done');
-  await window.electronAPI.store.set('todos', todos);
-  await window.electronAPI.store.set('backlog', backlog);
+  const nextList = targetList.filter(t => t.status !== 'Done');
+  replaceArrayContents(targetList, nextList);
+  await window.electronAPI.store.set(listKey, targetList);
   showNotification('完了タスクを削除しました');
   renderView();
 });
