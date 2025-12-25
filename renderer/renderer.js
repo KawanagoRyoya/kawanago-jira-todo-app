@@ -47,6 +47,11 @@ function isEditableElement(el) {
   return tag === 'input' || tag === 'textarea' || tag === 'select';
 }
 
+function replaceArrayContents(target, source) {
+  target.length = 0;
+  target.push(...source);
+}
+
 async function performUndo() {
   const action = undoStack.pop();
   if (!action) return;
@@ -56,11 +61,8 @@ async function performUndo() {
     const restoredBacklog = cloneData(action.backlog);
 
     // Update existing arrays in place to avoid invalidating external references.
-    todos.length = 0;
-    todos.push(...restoredTodos);
-
-    backlog.length = 0;
-    backlog.push(...restoredBacklog);
+    replaceArrayContents(todos, restoredTodos);
+    replaceArrayContents(backlog, restoredBacklog);
     await window.electronAPI.store.set('todos', todos);
     await window.electronAPI.store.set('backlog', backlog);
     showNotification('削除を取り消しました');
