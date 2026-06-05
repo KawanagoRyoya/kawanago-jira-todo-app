@@ -174,6 +174,7 @@ kawanago-jira-todo-app/
   - PJ名/Epic名のLabelをつけることができる ※優先度Low
   - タスクの削除機能の実装
   - タスクの操作用ボタンの実装（タスクの削除/Backlogへ移動 etc）
+  - Jira EpicパネルのようにパネルにドラッグアンドドロップでLabelの着脱ができる
 - 状態管理ライブラリの導入（Redux/Context）
 - 自動テスト
   - Playwrightを使った自動テスト
